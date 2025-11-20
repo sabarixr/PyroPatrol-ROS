@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Float32MultiArray
+import serial
+import struct
+import math
+
+FRAME_LEN = 22
+
+class LidarNode(Node):
+    def __init__(self):
+        super().__init__('lidar_node')
+        
+        # Parameters
+        self.declare_parameter('port', '/dev/ttyUSB0')
+        self.declare_parameter('baud', 115200)
+        self.declare_parameter('scan_frequency', 50.0)
+        
+        port = self.get_parameter('port').get_parameter_value().string_value
+        baud = self.get_parameter('baud').get_parameter_value().integer_value
+        
+        # Publishers
+        self.scan_pub = self.create_publisher(LaserScan, '/scan', 10)
+        self.raw_pub = self.create_publisher(Float32MultiArray, '/lidar/raw', 10)
+        
+        # Open serial connection
+        try:
+            self.serial = serial.Serial(
+                port=port,
+                baudrate=baud,
+                timeout=0.5  # Increased timeout for better frame sync
+            )
+            self.get_logger().info(f'✅ LiDAR connected on {port} @ {baud} baud')
+            
+            # Flush any old data
+            self.serial.reset_input_buffer()
+            self.serial.reset_output_buffer()
+            
+        except serial.SerialException as e:
+            self.get_logger().error(f'❌ Could not open serial port: {e}')
+            raise
+        
+        # Timer for reading LiDAR data
+        self.timer = self.create_timer(0.01, self.read_lidar)  # 100 Hz for faster reads
+        
+        # Accumulated scan data
+        self.angles = []
+        self.ranges = []
+        self.last_angle = None  # Track for wraparound detection
+        self.frame_buffer = bytearray()  # Buffer for frame synchronization
+        
+        self.get_logger().info('LiDAR node started')
+
+    def parse_frame(self, data):
+        """Parse a 22-byte LiDAR frame."""
+        if len(data) != FRAME_LEN:
+            return None
+
+        if data[0] != 0xAA or data[1] != 0x55:
+            return None
+
+        # Starting angle (hundredths of degrees)
+        angle_start = struct.unpack_from("<H", data, 2)[0] / 100.0
+
+        # Extract 9 distance values (mm → meters)
+        distances = []
+        for offset in range(4, 4 + 18, 2):
+            dist_mm = struct.unpack_from("<H", data, offset)[0]
+            distances.append(dist_mm / 1000.0)
+
+        return angle_start, distances
+
+    def read_lidar(self):
+        """Read LiDAR data with proper frame synchronization."""
+        try:
+            # Read available bytes
+            if self.serial.in_waiting > 0:
+                new_data = self.serial.read(self.serial.in_waiting)
+                self.frame_buffer.extend(new_data)
+            
+            # Process all complete frames in buffer
+            while len(self.frame_buffer) >= FRAME_LEN:
+                # Look for frame start marker (0xAA 0x55)
+                frame_start = -1
+                for i in range(len(self.frame_buffer) - 1):
+                    if self.frame_buffer[i] == 0xAA and self.frame_buffer[i+1] == 0x55:
+                        frame_start = i
+                        break
+                
+                if frame_start == -1:
+                    # No frame marker found, keep last byte in case it's 0xAA
+                    self.frame_buffer = self.frame_buffer[-1:]
+                    break
+                
+                # Remove data before frame marker
+                if frame_start > 0:
+                    self.frame_buffer = self.frame_buffer[frame_start:]
+                
+                # Check if we have a complete frame
+                if len(self.frame_buffer) < FRAME_LEN:
+                    break
+                
+                # Extract and process frame
+                frame = bytes(self.frame_buffer[:FRAME_LEN])
+                self.frame_buffer = self.frame_buffer[FRAME_LEN:]
+                
+                result = self.parse_frame(frame)
+                if result is not None:
+                    self.process_frame(result)
+                    
+        except Exception as e:
+            self.get_logger().warn(f'Error reading LiDAR: {e}')
+    
+    def process_frame(self, result):
+        """Process a parsed LiDAR frame."""
+        try:
+            angle_start, distances = result
+            
+            # Detect 360° wraparound (e.g., 350° → 10°)
+            if self.last_angle is not None and angle_start < self.last_angle - 180:
+                # Wraparound detected! Publish accumulated scan and start fresh
+                if len(self.angles) > 10:  # Only if we have meaningful data
+                    self.publish_scan()
+            
+            self.last_angle = angle_start
+            
+            # Calculate angle increment (9 points per frame)
+            angle_increment = 40.0 / 9.0  # degrees per measurement (~4.44°)
+            
+            # Store angles and ranges
+            for i, dist in enumerate(distances):
+                angle = angle_start + i * angle_increment
+                # Normalize to 0-360°
+                while angle >= 360.0:
+                    angle -= 360.0
+                self.angles.append(math.radians(angle))
+                self.ranges.append(dist)
+            
+            # Publish raw data
+            raw_msg = Float32MultiArray()
+            raw_msg.data = [angle_start] + distances
+            self.raw_pub.publish(raw_msg)
+                
+        except Exception as e:
+            self.get_logger().warn(f'Error processing frame: {e}')
+
+    def publish_scan(self):
+        """Publish accumulated scan as LaserScan message."""
+        if len(self.angles) == 0:
+            return
+            
+        scan_msg = LaserScan()
+        scan_msg.header.stamp = self.get_clock().now().to_msg()
+        scan_msg.header.frame_id = 'lidar_link'
+        
+        # Find angle range
+        angle_min = min(self.angles)
+        angle_max = max(self.angles)
+        
+        scan_msg.angle_min = angle_min
+        scan_msg.angle_max = angle_max
+        scan_msg.angle_increment = (angle_max - angle_min) / max(1, len(self.angles) - 1)
+        
+        scan_msg.time_increment = 0.0
+        scan_msg.scan_time = 0.02  # 50 Hz
+        
+        scan_msg.range_min = 0.15  # 15 cm minimum
+        scan_msg.range_max = 12.0  # 12 m maximum
+        
+        scan_msg.ranges = self.ranges
+        scan_msg.intensities = []  # No intensity data
+        
+        self.scan_pub.publish(scan_msg)
+        
+        # Clear accumulated data
+        self.angles.clear()
+        self.ranges.clear()
+        
+        self.get_logger().debug(f'Published scan with {len(scan_msg.ranges)} points')
+
+    def destroy_node(self):
+        """Clean up serial connection."""
+        if hasattr(self, 'serial') and self.serial.is_open:
+            self.serial.close()
+        super().destroy_node()
+
+def main(args=None):
+    rclpy.init(args=args)
+    
+    try:
+        lidar_node = LidarNode()
+        rclpy.spin(lidar_node)
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        print(f'Error: {e}')
+    finally:
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
