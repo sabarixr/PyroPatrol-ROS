@@ -1,16 +1,67 @@
-# 🚒 Fire Figh### L298N Motor Driver
-| Signal | GPIO | Function                 |
-|--------|------|--------------------------|
-| ENA    | 17   | PWM (left motor speed)   |
-| IN1    | 27   | Motor A Dir1             |
-| IN2    | 22   | Motor A Dir2             |
-| IN3    | 23   | Motor B Dir1             |
-| IN4    | 24   | Motor B Dir2             |
-| ENB    | 18   | PWM (right motor speed)  |
-| VCC    | 5V   |                          |
-| GND    | GND  |                          |ase ROS 2 System
+# 🚒 Fire Fighter Rover ROS 2 System
+
+> Version control initialized (git) – this README now reflects the structured repository layout and workflow.
 
 A complete ROS 2 system for a Raspberry Pi 4 based fire fighter rover with camera, IMU, and motor control capabilities.
+
+## 📂 Repository Structure
+
+```
+frr_ws/
+├── src/
+│   ├── frr_bringup/          # Launch files aggregating system nodes
+│   ├── frr_control/          # Motor driver, teleop control logic
+│   ├── frr_navigation/       # (Planned / WIP) navigation and obstacle logic
+│   ├── frr_sensors/          # IMU, camera, lidar and sensor interfaces
+│   ├── frr_video/            # Video streaming (Flask MJPEG)
+│   ├── ydlidar_ros2_driver/  # Vendor ROS2 driver for YDLidar
+│   └── YDLidar-SDK/          # Low-level SDK sources
+├── tools/                    # Utility scripts / diagnostics helpers
+├── *.sh                      # Setup, launch, diagnostic shell scripts
+├── test_*.py / test_*.sh     # Standalone test scripts for components
+├── build/ install/ log/      # Colcon build artifacts (ignored)
+└── README.md
+```
+
+## 🗃️ Git & Contribution Workflow
+
+We maintain a readable history using logical commits:
+
+- `chore:` toolchain / meta changes (gitignore, formatting)
+- `docs:` documentation only changes
+- `feat:` new node, capability or launch inclusion
+- `fix:` bug fixes (sensor reading, motor timing, etc.)
+- `perf:` performance or resource optimization
+- `refactor:` structural code change without new features
+
+### Branching
+`main` holds stable, tested code. For new work create feature branches:
+```
+git checkout -b feat/<short-description>
+```
+Open a PR (if remote collaboration) and ensure tests or basic verification steps are described.
+
+### Adding Remote (already initialized locally)
+```
+git remote add origin https://github.com/sabarixr/PyroPatrol-ROS.git
+git push -u origin main
+```
+
+### Recommended Commit Order (already underway)
+1. Initialize repo & add base docs (done)
+2. Add operational scripts & tooling (next)
+3. Add source packages under `src/`
+4. Add test scripts
+5. Subsequent features / fixes in isolated commits
+
+## ✅ Current Status Snapshot
+
+- Git repository initialized (`main` branch)
+- `.gitignore` configured for ROS2/Python artifacts
+- Base documentation enhanced with structure and workflow sections
+- Next commit will add shell scripts & utilities
+
+---
 
 ## 🧠 System Overview
 
