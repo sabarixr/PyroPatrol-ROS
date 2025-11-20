@@ -1,0 +1,30 @@
+ydlidar_ros2_driver_node:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    frame_id: "laser_frame"
+
+    baudrate: 115200          # X2 ALWAYS uses 115200
+    device_type: 0            # Serial USB
+    lidar_type: 1             # TYPE_TRIANGLE
+    isSingleChannel: true     # X2 = true
+
+    sample_rate: 4            # X2 uses around 3–4 kHz stable
+    frequency: 6.0            # X2 max reliable = ~6 Hz
+
+    angle_min: -180.0
+    angle_max: 180.0
+    range_min: 0.12
+    range_max: 8.0
+
+    fixed_resolution: true
+    auto_reconnect: true
+
+    reversion: false
+    inverted: false
+    ignore_array: ""
+
+    intensity: false
+    intensity_bit: 0
+    support_motor_dtr: false   # X2 MUST have this disabled
+    invalid_range_is_inf: false
+    debug: false
