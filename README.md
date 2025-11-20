@@ -101,29 +101,57 @@ The rover integrates:
 ## 📦 ROS 2 Packages
 
 ### 1️⃣ `frr_sensors`
-- `imu_node` - MMA8452 I²C reader with fall detection
-- `camera_node` - OpenCV camera with ArUco marker detection
+- `imu_node` – Legacy IMU reader (publishes `/imu/data_raw`, `/rover/fall_detected`)
+- `frr_sensors/imu_node.py` variants – Robust / vibration filtered MPU6050 (`/imu/mpu6050`, `/imu/mpu6050_raw`)
+- `camera_node` / `simple_camera_node` – OpenCV camera + ArUco detection (`/camera/image_raw`, `/camera/image_raw/compressed`, `/aruco/pose`)
+- `lidar_node` – Lidar scan + raw values (`/scan`, `/lidar/raw`)
+- `lidar_odometry_node` – Combines scan + IMU to publish odometry (`/lidar_odom`)
+- `odometry_node` – Fuses IMU + commanded velocity to produce `/odom`, `/velocity_error`, `/speed_correction`
+- `obstacle_avoidance_node` – Subscribes to `/scan` & `/cmd_vel`, republishes corrected `/cmd_vel` and `/obstacle_detected`
 
-### 2️⃣ `frr_control` 
-- `motor_driver_node` - L298N PWM controller with differential drive
-- `teleop_node` - Keyboard teleoperation interface
+### 2️⃣ `frr_control`
+- `motor_controller_node` – Differential drive motor + servo tilt control (subs: `/cmd_vel`, `/camera_tilt`, optional `/speed_correction`; pubs: `/motor_status`)
+- `motor_simple.py` – Minimal subscriber to `/cmd_vel` for direct motor control
+- `teleop_node` / `teleop_node_clean` – Keyboard teleoperation (pubs: `/cmd_vel`, `/camera_tilt`; subs optional `/obstacle_detected`)
+- `speed_controller_node` – Applies corrections from odometry (`/speed_correction`)
+- `camera_servo_node` – Servo angle management (`/camera_tilt`)
 
-### 3️⃣ `frr_video`
-- `streamer_node` - Flask-based MJPEG video streaming server
+### 3️⃣ `frr_navigation`
+- Experimental `teleop_node` variant (future navigation hooks) – publishes `/cmd_vel`, `/camera_tilt`
 
-### 4️⃣ `frr_bringup`
-- Launch files to start all nodes at once
+### 4️⃣ `frr_video`
+- `streamer_node` / `optimized_streamer_node` – MJPEG streaming server (subs: `/camera/image_raw` or `/camera/image_raw/compressed`)
+
+### 5️⃣ `ydlidar_ros2_driver`
+- Vendor lidar driver node (pubs: `/scan`, `/point_cloud`; client subscribes to `/scan` for info)
+
+### 6️⃣ `frr_bringup`
+- Launch files orchestrating sensors, control, video, and optional avoidance/navigation stacks
 
 ## 🔄 ROS 2 Topics
+Comprehensive topic matrix extracted from source code:
 
-| Topic                  | Type                  | Publisher    | Subscriber     | Purpose                         |
-|------------------------|----------------------|--------------|----------------|---------------------------------|
-| `/cmd_vel`             | `geometry_msgs/Twist` | teleop       | motor_driver   | Linear/angular velocity         |
-| `/imu/data_raw`        | `sensor_msgs/Imu`     | imu_node     | —              | Raw accel + integrated velocity |
-| `/rover/fall_detected` | `std_msgs/Bool`       | imu_node     | —              | Fall/tip event                  |
-| `/camera/image_raw`    | `sensor_msgs/Image`   | camera_node  | video_streamer | Captured frames                 |
-| `/aruco/pose`          | `geometry_msgs/Pose`  | camera_node  | —              | 3D pose of detected ArUco markers (position + orientation) |
-| `/motor_status`        | `std_msgs/String`     | motor_driver | —              | Motor diagnostics               |
+| Topic | Type | Publishers | Subscribers | Purpose |
+|-------|------|------------|-------------|---------|
+| `/cmd_vel` | `geometry_msgs/Twist` | teleop nodes, obstacle_avoidance_node (corrected) | motor_controller_node, obstacle_avoidance_node (input), motor_simple | Base velocity commands |
+| `/cmd_vel_teleop` | `geometry_msgs/Twist` | teleop_node_clean (variant) | (internal remap) | Intermediate teleop channel |
+| `/camera_tilt` | `std_msgs/Float64` | teleop nodes, camera_servo_node | motor_controller_node (servo control) | Camera servo angle |
+| `/imu/data_raw` | `sensor_msgs/Imu` | legacy `imu_node` | odometry/other diagnostic tools | Raw IMU (basic) |
+| `/imu/mpu6050` | `sensor_msgs/Imu` | robust MPU6050 nodes | odometry_node, lidar_odometry_node | Filtered IMU orientation & accel |
+| `/imu/mpu6050_raw` | `std_msgs/Float32MultiArray` | robust MPU6050 nodes | diagnostics | Raw accelerometer + gyro arrays |
+| `/rover/fall_detected` | `std_msgs/Bool` | imu_node | safety monitors | Rover tip/fall event |
+| `/camera/image_raw` | `sensor_msgs/Image` | camera_node, simple_camera_node | streamer_node / optimized_streamer_node | Uncompressed camera frames |
+| `/camera/image_raw/compressed` | `sensor_msgs/CompressedImage` | camera_node (if compression enabled) | optimized_streamer_node | Compressed camera frames |
+| `/aruco/pose` | `geometry_msgs/Pose` | camera nodes | navigation / localization consumers | 3D ArUco marker pose |
+| `/scan` | `sensor_msgs/LaserScan` | lidar_node, ydlidar_ros2_driver | obstacle_avoidance_node, lidar_odometry_node | 2D lidar scan |
+| `/lidar/raw` | `std_msgs/Float32MultiArray` | lidar_node | diagnostics | Raw distance/intensity array |
+| `/point_cloud` | `sensor_msgs/PointCloud` | ydlidar_ros2_driver | mapping consumers | Point cloud (if enabled) |
+| `/lidar_odom` | `nav_msgs/Odometry` | lidar_odometry_node | navigation stack | Odometry from lidar+IMU fusion |
+| `/odom` | `nav_msgs/Odometry` | odometry_node | navigation stack, motor control tuning | Fused odometry (IMU + velocity integration) |
+| `/velocity_error` | `geometry_msgs/Vector3` | odometry_node | speed_controller_node | Error vector between desired/measured velocity |
+| `/speed_correction` | `std_msgs/Float32MultiArray` | odometry_node | motor_controller_node | Wheel speed correction factors |
+| `/obstacle_detected` | `std_msgs/Bool` | obstacle_avoidance_node | teleop_node_clean (optional), high-level logic | Indicates obstacle ahead |
+| `/motor_status` | `std_msgs/String` | motor_controller_node | diagnostics | Motor/servo status and alerts |
 
 ## 🎯 ArUco Marker Navigation
 
