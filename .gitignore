@@ -1,0 +1,52 @@
+# ROS2 colcon build artifacts
+build/
+install/
+log/
+.colcon_cache/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Binary/object/library files
+*.so
+*.a
+*.o
+
+# C/C++ build system noise
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+cmake_install.cmake
+Makefile
+
+# Editor / IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Packaging / virtual envs (uncomment if you create one)
+# .venv/
+# venv/
+# dist/
+# wheels/
+
+# Logs and reports
+*.log
+
+# Temporary
+*.tmp
+*.bak
+*~
+
+# Backup specific file variants
+check_lidar.py.backup
+
+# Do NOT ignore src/ or tools/ to keep source code tracked.
