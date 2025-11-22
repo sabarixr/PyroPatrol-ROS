@@ -1,6 +1,38 @@
-# 🚒 Fire Fighter Rover ROS 2 System
+# 🚒 Fire Fighter Rover ROS 2 System with SLAM
+
+> **NEW!** SLAM mapping and autonomous navigation now available! See [QUICK_START.md](QUICK_START.md) for the complete autonomous fire-fighting system with LIDAR SLAM.
 
 > Version control initialized (git) – this README now reflects the structured repository layout and workflow.
+
+A complete ROS 2 system for a Raspberry Pi 4 based fire fighter rover with camera, IMU, motor control, and SLAM-based autonomous navigation capabilities.
+
+## 🎯 Quick Launch
+
+**For autonomous SLAM operation:**
+```bash
+./launch_slam.sh
+```
+See [QUICK_START.md](QUICK_START.md), [SLAM_README.md](SLAM_README.md), and [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md) for complete documentation.
+
+**For manual teleoperation:**
+```bash
+ros2 launch frr_bringup rover_bringup.launch.py
+```
+
+---
+
+## 📚 Documentation Index
+
+| Document | Description |
+|----------|-------------|
+| **[README.md](README.md)** | This file - original system overview and manual operation |
+| **[QUICK_START.md](QUICK_START.md)** | Quick reference for SLAM autonomous system |
+| **[SLAM_README.md](SLAM_README.md)** | Complete SLAM system documentation |
+| **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** | Pre-flight checklist before autonomous operation |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | System architecture and data flow diagrams |
+| **[ESP32_FIRMWARE_TEMPLATE.ino](ESP32_FIRMWARE_TEMPLATE.ino)** | ESP32 Arduino firmware with MPU6050 support |
+
+---
 
 A complete ROS 2 system for a Raspberry Pi 4 based fire fighter rover with camera, IMU, and motor control capabilities.
 

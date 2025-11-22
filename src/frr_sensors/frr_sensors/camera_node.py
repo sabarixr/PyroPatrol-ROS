@@ -122,7 +122,10 @@ class CameraNode(Node):
             self.get_logger().warn('Failed to capture frame')
             return
         
-        # Detect ArUco markers
+       
+        frame = cv2.flip(frame, -1)
+        
+        
         self.detect_aruco_markers(frame)
         
         # Publish image for streaming if enabled

@@ -26,9 +26,12 @@ setup(
         'console_scripts': [
             'imu_node = frr_sensors.imu_node:main',
             'mpu6050_node = frr_sensors.mpu6050_node:main',
+            'sensor_fusion_node = frr_sensors.sensor_fusion_node:main',
+            'robot_tf_publisher = frr_sensors.robot_tf_publisher:main',
             'odometry_node = frr_sensors.odometry_node:main',
             'camera_node = frr_sensors.camera_node:main',
             'simple_camera_node = frr_sensors.simple_camera_node:main',
+            'esp32_sensor_node = frr_sensors.esp32_sensor_node:main',
             'lidar_node = frr_sensors.lidar_node:main',
             'lidar_odometry_node = frr_sensors.lidar_odometry_node:main',
             'obstacle_avoidance_node = frr_sensors.obstacle_avoidance_node:main',

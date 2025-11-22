@@ -1,0 +1,66 @@
+#!/bin/bash
+# Fire Fighter Rover - Main Startup Script
+# Raspberry Pi Brain + ESP32 Muscle System
+
+echo "🚒 Fire Fighter Rover - Starting Up..."
+echo "========================================"
+echo ""
+
+# Check if sourced
+if [ -z "$ROS_DISTRO" ]; then
+    echo "📦 Sourcing ROS 2 workspace..."
+    cd /home/alibaba/frr_ws
+    source install/setup.bash
+fi
+
+# Check ESP32 connection
+echo "🔌 Checking ESP32 connection..."
+if ls /dev/ttyUSB* 2>/dev/null || ls /dev/ttyACM* 2>/dev/null; then
+    ESP32_PORT=$(ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null | head -n 1)
+    echo "✅ ESP32 found at $ESP32_PORT"
+else
+    echo "❌ ESP32 not found! Please connect ESP32 via USB"
+    exit 1
+fi
+
+echo ""
+echo "🧠 Raspberry Pi = BRAIN (makes decisions)"
+echo "💪 ESP32 = MUSCLE (executes commands)"
+echo ""
+
+# Ask for mode
+echo "Select mode:"
+echo "  1) Autonomous (Pi brain navigates towards fire/gas)"
+echo "  2) Manual (keyboard teleop control)"
+echo ""
+read -p "Enter choice [1-2]: " choice
+
+case $choice in
+    1)
+        echo ""
+        echo "🤖 Starting AUTONOMOUS mode..."
+        echo "   - Pi analyzes sensors (MQ5, MQ6, temperature)"
+        echo "   - Pi makes navigation decisions"  
+        echo "   - Pi detects obstacles and avoids them"
+        echo "   - ESP32 executes motor commands"
+        echo ""
+        
+        ros2 launch frr_bringup autonomous_robot.launch.py
+        ;;
+    2)
+        echo ""
+        echo "🎮 Starting MANUAL mode..."
+        echo "   - Use keyboard to control"
+        echo "   - W/A/S/D for movement"
+        echo "   - I/K for camera tilt"
+        echo ""
+        
+        ros2 launch frr_bringup esp32_rover_bringup.launch.py &
+        sleep 3
+        ros2 run frr_navigation esp32_teleop_node
+        ;;
+    *)
+        echo "Invalid choice!"
+        exit 1
+        ;;
+esac

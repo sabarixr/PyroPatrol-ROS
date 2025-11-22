@@ -78,29 +78,37 @@ sleep 1
 echo "1..."
 sleep 1
 
-echo
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}✓ Starting Robot!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo
-echo -e "${YELLOW}To control:${NC}"
-echo -e "  1. Open NEW terminal"
-echo -e "  2. Run: ${GREEN}cd ~/frr_ws && ./start_teleop.sh${NC}"
+echo -e "${YELLOW}Features enabled:${NC}"
+echo -e "  ✓ Camera with ArUco detection (FIXED INVERSION)"
+echo -e "  ✓ LIDAR obstacle avoidance"
+echo -e "  ✓ Manual teleop control (opens in new window)"
+echo -e "  ✓ Fire seeking (autonomous when fire detected)"
+echo -e "  ✓ ESP32 motor control"
+echo -e "  ✓ Video streaming at http://<pi-ip>:8080"
 echo
-echo -e "${YELLOW}To check LiDAR:${NC}"
-echo -e "  1. Open NEW terminal"
-echo -e "  2. Run: ${GREEN}cd ~/frr_ws && python3 check_lidar.py${NC}"
+echo -e "${YELLOW}How it works:${NC}"
+echo -e "  ${GREEN}Manual Control:${NC}"
+echo -e "    - Use teleop window (will open automatically)"
+echo -e "    - Drive with W/A/S/D keys"
+echo -e "    - Speed up/down with T/G keys"
+echo
+echo -e "  ${GREEN}Fire Seeking (Autonomous):${NC}"
+echo -e "    - Monitors MQ2, MQ5, flame, temperature sensors"
+echo -e "    - When fire detected → moves toward source"
+echo -e "    - Activates pump when close"
+echo -e "    - Always avoids obstacles!"
+echo
+echo -e "  ${GREEN}ArUco Mode (Optional):${NC}"
+echo -e "    - To enable: add 'enable_aruco_follower:=true'"
+echo -e "    - Moves 2s when marker detected"
 echo
 echo -e "${BLUE}========================================${NC}"
 echo
 
-# Launch!
-echo -e "${YELLOW}Starting YDLidar driver (background)...${NC}"
-# Start the external YDLidar ROS2 driver in background and capture PID. Output goes to /tmp/ydlidar.log
-ros2 launch ydlidar_ros2_driver x2.launch.py > /tmp/ydlidar.log 2>&1 &
-YDLIDAR_PID=$!
-sleep 2
-echo -e "${GREEN}✓ YDLidar driver launched (PID: ${YDLIDAR_PID})${NC}"
-
+# Launch the complete rover system
 echo -e "${YELLOW}Launching rover bringup...${NC}"
 ros2 launch frr_bringup rover_bringup.launch.py

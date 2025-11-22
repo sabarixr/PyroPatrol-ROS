@@ -1,136 +1,46 @@
-#!/usr/bin/env python3
-"""
-Rover Bringup Launch File
-=========================
-
-This launch file starts all core rover systems:
-- MPU6050 IMU (orientation and acceleration)
-- LiDAR navigation (optional, enabled by default)
-  * LiDAR scanning
-  * Position tracking with triangulation (starts from 0,0)
-  * Obstacle avoidance (4-corner detection)
-- Camera and video streaming (optional)
-- Motor control
-
-Topic Flow:
------------
-When LiDAR is ENABLED:
-  Teleop → /cmd_vel_teleop → Obstacle Avoidance → /cmd_vel → Motors
-  (Teleop must be run separately with cmd_vel remapping)
-
-When LiDAR is DISABLED:
-  Teleop → /cmd_vel → Motors (direct control, no obstacle avoidance)
-
-Usage:
-------
-# Full system with LiDAR and video:
-ros2 launch frr_bringup rover_bringup.launch.py
-
-# Without video (save CPU):
-ros2 launch frr_bringup rover_bringup.launch.py enable_video_stream:=false
-
-# Without LiDAR (if not connected):
-ros2 launch frr_bringup rover_bringup.launch.py enable_lidar:=false
-
-# Minimal (no video, no LiDAR):
-ros2 launch frr_bringup rover_bringup.launch.py enable_video_stream:=false enable_lidar:=false
-
-Teleop (run in separate terminal):
------------------------------------
-# With obstacle avoidance (LiDAR enabled):
-ros2 run frr_control teleop_node --ros-args -r /cmd_vel:=/cmd_vel_teleop
-
-# Without obstacle avoidance (direct control):
-ros2 run frr_control teleop_node
-"""
-
 from launch import LaunchDescription
+from launch import conditions
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
-from launch.conditions import IfCondition
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
+from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
+    """
+    Main rover bringup - launches everything you need
+    - Camera with ArUco detection (FIXED INVERSION)
+    - LIDAR for obstacle avoidance
+    - ESP32 motor control
+    - ArUco follower (moves 2s when marker detected)
+    - Video streaming
+    """
+    
+    # Declare arguments
+    enable_video_arg = DeclareLaunchArgument(
+        'enable_video_stream',
+        default_value='true',
+        description='Enable video streaming server'
+    )
+    
+    enable_aruco_arg = DeclareLaunchArgument(
+        'enable_aruco_follower',
+        default_value='false',
+        description='Enable ArUco following behavior (disable for manual control)'
+    )
+    
+    enable_fire_arg = DeclareLaunchArgument(
+        'enable_fire_seeking',
+        default_value='true',
+        description='Enable fire detection and seeking'
+    )
+    
     return LaunchDescription([
-        # Launch arguments
-        DeclareLaunchArgument(
-            'enable_video_stream',
-            default_value='true',
-            description='Enable video streaming (set to false to reduce CPU usage)'
-        ),
+        enable_video_arg,
+        enable_aruco_arg,
+        enable_fire_arg,
         
-        DeclareLaunchArgument(
-            'enable_lidar',
-            default_value='true',
-            description='Enable LiDAR and navigation features'
-        ),
-        
-        # MPU6050 IMU Node (Center of Rover) - With vibration filtering
-        Node(
-            package='frr_sensors',
-            executable='mpu6050_node',
-            name='mpu6050_node',
-            output='log',  # Don't spam terminal
-            parameters=[{
-                'use_sim_time': False,
-            }]
-        ),
-        
-        # LiDAR Odometry Node (Position tracking with triangulation)
-        # Uses external LiDAR (e.g. YDLidar) publishing on /scan and the
-        # MPU6050 IMU for sensor fusion / triangulation corrections.
-        Node(
-            package='frr_sensors',
-            executable='lidar_odometry_node',
-            name='lidar_odometry_node',
-            output='screen',
-            parameters=[{
-                'lidar_offset_x': 0.10,    # 10cm forward from center
-                'lidar_offset_y': -0.0125,  # 1.25cm to right (avg offset)
-                'use_sim_time': False,
-            }],
-            condition=IfCondition(LaunchConfiguration('enable_lidar'))
-        ),
-        
-        # LiDAR is provided by an external driver (e.g. YDLidar). Do not start
-        # the internal serial-based lidar node here. The external driver should
-        # publish LaserScan on /scan and the obstacle avoidance node will
-        # subscribe to that topic. We do, however, start the LiDAR odometry
-        # node which fuses the MPU6050 IMU with incoming LaserScan data to
-        # provide /lidar_odom when LiDAR is enabled.
-
-        Node(
-            package='frr_sensors',
-            executable='lidar_odometry_node',
-            name='lidar_odometry_node',
-            output='screen',
-            parameters=[{
-                'lidar_offset_x': 0.10,    # 10cm forward from center
-                'lidar_offset_y': -0.0125,  # 1.25cm to right (avg offset)
-                'use_sim_time': False,
-            }],
-            condition=IfCondition(LaunchConfiguration('enable_lidar'))
-        ),
-        
-        # Obstacle Avoidance Node (4-corner detection)
-        # Monitors front, back, left, right zones
-        # Topic flow: /cmd_vel_teleop (from teleop) → obstacle_avoidance → /cmd_vel (to motors)
-        # Obstacle Avoidance Node
-        Node(
-            package='frr_sensors',
-            executable='obstacle_avoidance_node',
-            name='obstacle_avoidance_node',
-            output='log',  # Less spam
-            parameters=[{
-                'rover_width': 0.20,
-                'rover_length': 0.30,
-                'safety_margin': 0.25,  # Increased from 0.15
-                'stop_distance': 0.35,  # Increased from 0.30
-            }],
-            condition=IfCondition(LaunchConfiguration('enable_lidar'))
-        ),
-        
-        # Camera Node (Optimized for Performance)
+        # ========== CAMERA (WITH FIXED INVERSION) ==========
         Node(
             package='frr_sensors',
             executable='camera_node',
@@ -138,33 +48,84 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'camera_id': 0,
-                'frame_width': 320,      # Reduced for less lag
-                'frame_height': 240,     # Reduced for less lag
-                'fps': 15,               # Reduced FPS for stability
-                'enable_streaming': LaunchConfiguration('enable_video_stream'),
-                'use_sim_time': False,
+                'frame_width': 640,
+                'frame_height': 480,
+                'fps': 30,
+                'enable_streaming': True,
+                'jpeg_quality': 80,
             }]
         ),
         
-        # Motor Driver Node (L298N H-Bridge with Encoders)
+        # ========== LIDAR (Obstacle Detection) ==========
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                PathJoinSubstitution([
+                    FindPackageShare('ydlidar_ros2_driver'),
+                    'launch',
+                    'x2.launch.py'
+                ])
+            ])
+        ),
+        
+        # ========== ESP32 BRIDGE (Motor Control + Fire Sensors) ==========
         Node(
             package='frr_control',
-            executable='motor_driver_node',
-            name='motor_driver_node',
-            output='screen',  # Keep this one visible
+            executable='esp32_bridge_node',
+            name='esp32_bridge',
+            output='screen',
             parameters=[{
-                'max_speed': 2.5,  # Increased to 2.5 m/s as requested!
-                'max_angular_speed': 3.0,
+                'serial_port': '/dev/ttyACM0',
+                'baud_rate': 115200,
                 'wheel_base': 0.2,
-                'enable_feedback_control': True,
-                'feedback_gain': 0.3,
-                'servo_min_angle': -90.0,
-                'servo_max_angle': 90.0,
-                'servo_center_angle': 0.0,
+                'max_linear_speed': 100,
+                'max_angular_speed': 100,
             }]
         ),
         
-        # Video Streamer Node (Optimized for Performance)
+        # ========== TELEOP (Manual Control) ==========
+        Node(
+            package='frr_navigation',
+            executable='esp32_teleop_node',
+            name='teleop',
+            output='screen',
+            prefix='xterm -e',  # Opens in new terminal window
+        ),
+        
+        # ========== FIRE SEEKING (Autonomous) ==========
+        Node(
+            package='frr_navigation',
+            executable='autonomous_firebot_node',
+            name='fire_seeker',
+            output='screen',
+            parameters=[{
+                'max_speed': 0.3,
+                'min_obstacle_distance': 0.5,
+                'fire_threshold_mq2': 600,
+                'fire_threshold_mq5': 550,
+                'temp_rise_threshold': 2.0,
+            }],
+            condition=conditions.IfCondition(
+                LaunchConfiguration('enable_fire_seeking')
+            )
+        ),
+        
+        # ========== ARUCO FOLLOWER ==========
+        Node(
+            package='frr_navigation',
+            executable='aruco_follower_node',
+            name='aruco_follower',
+            output='screen',
+            parameters=[{
+                'forward_speed': 0.2,           # Speed when moving
+                'move_duration': 2.0,           # Move for 2 seconds
+                'min_obstacle_distance': 0.5,   # Stop if obstacle within 0.5m
+            }],
+            condition=conditions.IfCondition(
+                LaunchConfiguration('enable_aruco_follower')
+            )
+        ),
+        
+        # ========== VIDEO STREAMER ==========
         Node(
             package='frr_video',
             executable='streamer_node',
@@ -173,10 +134,10 @@ def generate_launch_description():
             parameters=[{
                 'port': 8080,
                 'host': '0.0.0.0',
-                'jpeg_quality': 70,      # Reduced quality for better performance
-                'buffer_size': 2,        # Smaller buffer
-                'use_sim_time': False,
+                'quality': 80,
             }],
-            condition=IfCondition(LaunchConfiguration('enable_lidar'))
+            condition=conditions.IfCondition(
+                LaunchConfiguration('enable_video_stream')
+            )
         ),
     ])

@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'motor_driver_node = frr_control.motor_controller_node:main',
+            'esp32_bridge_node = frr_control.esp32_bridge_node:main',
             'teleop_node = frr_control.teleop_node:main',
             'teleop_node_clean = frr_control.teleop_node_clean:main',
         ],
