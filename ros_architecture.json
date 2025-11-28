@@ -203,7 +203,8 @@
       "subscribes": {
         "/scan": 1,
         "/aruco/pose": 1,
-        "/esp32_telemetry": 1
+        "/esp32_telemetry": 1,
+        "/sensor_fusion/pose": 1
       }
     },
     "ArucoFollowerNode": {
@@ -231,6 +232,7 @@
       "subscribes": {
         "/esp32_telemetry": 1,
         "/scan": 1,
+        "/aruco/pose": 1,
         "/autonomous_mode": 1
       }
     },
@@ -310,23 +312,12 @@
         "src/frr_sensors/frr_sensors/sensor_fusion_node.py"
       ],
       "publishes": {
-        "/odom": 1
+        "/odom": 1,
+        "/sensor_fusion/pose": 1
       },
       "subscribes": {
         "/esp32_telemetry": 1,
         "/imu/mpu6050": 1
-      }
-    },
-    "ESP32SensorNode": {
-      "files": [
-        "src/frr_sensors/frr_sensors/esp32_sensor_node.py"
-      ],
-      "publishes": {
-        "/fire_detected": 1,
-        "/hazard_level": 1
-      },
-      "subscribes": {
-        "/esp32_telemetry": 1
       }
     },
     "LidarNode": {
@@ -457,10 +448,10 @@
       "publishers": [
         "ArucoFollowerNode",
         "AutonomousFirebotNode",
-        "SimpleAutonomousNode",
         "TeleopNode",
+        "CleanTeleopNode",
         "ObstacleAvoidanceNode",
-        "CleanTeleopNode"
+        "SimpleAutonomousNode"
       ],
       "subscribers": [
         "ESP32BridgeNode"
@@ -476,8 +467,8 @@
     },
     "/camera_tilt": {
       "publishers": [
-        "CleanTeleopNode",
-        "TeleopNode"
+        "TeleopNode",
+        "CleanTeleopNode"
       ],
       "subscribers": [
         "ESP32BridgeNode"
@@ -503,10 +494,9 @@
         "ESP32BridgeNode"
       ],
       "subscribers": [
-        "SimpleAutonomousNode",
         "SensorFusionNode",
-        "ESP32SensorNode",
-        "AutonomousFirebotNode"
+        "AutonomousFirebotNode",
+        "SimpleAutonomousNode"
       ]
     },
     "/sensors/smoke": {
@@ -560,10 +550,10 @@
         "LidarNode"
       ],
       "subscribers": [
-        "SimpleAutonomousNode",
         "ArucoFollowerNode",
         "LidarOdometryNode",
-        "AutonomousFirebotNode"
+        "AutonomousFirebotNode",
+        "SimpleAutonomousNode"
       ]
     },
     "/aruco/pose": {
@@ -571,8 +561,17 @@
         "CameraNode"
       ],
       "subscribers": [
-        "SimpleAutonomousNode",
-        "ArucoFollowerNode"
+        "ArucoFollowerNode",
+        "AutonomousFirebotNode",
+        "SimpleAutonomousNode"
+      ]
+    },
+    "/sensor_fusion/pose": {
+      "publishers": [
+        "SensorFusionNode"
+      ],
+      "subscribers": [
+        "SimpleAutonomousNode"
       ]
     },
     "/autonomous_status": {
@@ -610,8 +609,8 @@
         "MPU6050NodeRobust"
       ],
       "subscribers": [
-        "LidarOdometryNode",
-        "SensorFusionNode"
+        "SensorFusionNode",
+        "LidarOdometryNode"
       ]
     },
     "/imu/mpu6050_raw": {
@@ -629,18 +628,6 @@
     "/odom": {
       "publishers": [
         "SensorFusionNode"
-      ],
-      "subscribers": []
-    },
-    "/fire_detected": {
-      "publishers": [
-        "ESP32SensorNode"
-      ],
-      "subscribers": []
-    },
-    "/hazard_level": {
-      "publishers": [
-        "ESP32SensorNode"
       ],
       "subscribers": []
     },
