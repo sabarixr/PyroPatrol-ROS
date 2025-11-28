@@ -48,7 +48,7 @@ class SimpleAutonomousNode(Node):
         self.last_scan = None
         self.aruco_detected = False
         self.aruco_pose = None
-    self.fusion_pose = None
+        self.fusion_pose = None
         self.approaching_marker = False
         self.approach_start_time = None
         
@@ -101,7 +101,7 @@ class SimpleAutonomousNode(Node):
                 self.fire_detected = True
             else:
                 self.fire_detected = False
-        except:
+        except Exception:
             pass
 
     def fusion_callback(self, msg):

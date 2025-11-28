@@ -8,7 +8,7 @@ Uses robot_localization for EKF fusion and SLAM Toolbox for mapping
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import TransformStamped, Twist
+from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Imu
 from std_msgs.msg import String
@@ -45,19 +45,19 @@ class SensorFusionNode(Node):
             Imu, '/imu/mpu6050', self.imu_callback, 10
         )
         
-    # Publishers
-    self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
-    # Publish a lightweight fused pose for consumption by higher-level
-    # autonomy nodes (e.g. SimpleAutonomousNode)
-    self.fusion_pose_pub = self.create_publisher(PoseStamped, '/sensor_fusion/pose', 10)
+        # Publishers
+        self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
+        # Publish a lightweight fused pose for consumption by higher-level
+        # autonomy nodes (e.g. SimpleAutonomousNode)
+        self.fusion_pose_pub = self.create_publisher(PoseStamped, '/sensor_fusion/pose', 10)
         
         # TF broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
-        
+
         # IMU data storage
         self.imu_orientation = None
         self.imu_angular_velocity_z = 0.0
-        
+
         self.get_logger().info('🗺️  SLAM Sensor Fusion Node started!')
         self.get_logger().info('📡 Fusing: LIDAR + MPU6050 + Wheel Encoders')
 

@@ -52,8 +52,8 @@ class AutonomousFirebotNode(Node):
         self.min_front_distance = float('inf')
         self.min_left_distance = float('inf')
         self.min_right_distance = float('inf')
-    # ArUco pose (if available)
-    self.aruco_pose = None
+        # ArUco pose (if available)
+        self.aruco_pose = None
         
         # Subscribers
         self.telemetry_sub = self.create_subscription(
