@@ -10,7 +10,7 @@ Then sends movement commands to ESP32
 
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Pose
 from std_msgs.msg import String, Bool
 from sensor_msgs.msg import LaserScan
 import json
@@ -60,6 +60,9 @@ class AutonomousFirebotNode(Node):
         )
         self.lidar_sub = self.create_subscription(
             LaserScan, '/scan', self.lidar_callback, 10
+        )
+        self.aruco_sub = self.create_subscription(
+            Pose, '/aruco/pose', self.aruco_callback, 10
         )
         self.mode_sub = self.create_subscription(
             Bool, '/autonomous_mode', self.mode_callback, 10
@@ -179,6 +182,17 @@ class AutonomousFirebotNode(Node):
                 pump_msg.data = True
                 self.pump_pub.publish(pump_msg)
                 status += " - 💦 SPRAYING WATER!"
+
+            # If we have an ArUco pose we can optionally steer towards it
+            # (simple heuristic): if marker at non-zero x, adjust angular.z
+            try:
+                if hasattr(self, 'aruco_pose') and self.aruco_pose is not None:
+                    # ArUco pose position.x is lateral offset in camera frame; use as angle proxy
+                    x = self.aruco_pose.position.x
+                    # small proportional steering
+                    twist.angular.z = max(min(-0.5 * x, 0.6), -0.6)
+            except Exception:
+                pass
         
         # Priority 3: SEARCH PATTERN - Look for fire
         else:
