@@ -24,7 +24,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'teleop_node = frr_navigation.teleop_node:main',
             'esp32_teleop_node = frr_navigation.esp32_teleop_node:main',
             'autonomous_nav_node = frr_navigation.autonomous_nav_node:main',
             'autonomous_firebot_node = frr_navigation.autonomous_firebot_node:main',
