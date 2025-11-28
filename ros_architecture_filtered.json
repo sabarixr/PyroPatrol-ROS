@@ -1,0 +1,401 @@
+{
+  "nodes": {
+    "ObstacleDebugger": {
+      "files": [
+        "debug_obstacle_avoidance.py"
+      ],
+      "publishes": {},
+      "subscribes": {
+        "/scan": 1,
+        "/cmd_vel_teleop": 1,
+        "/cmd_vel": 1
+      }
+    },
+    "LidarViewer": {
+      "files": [
+        "check_lidar.py"
+      ],
+      "publishes": {},
+      "subscribes": {
+        "/scan": 1
+      }
+    },
+    "TeleopNode": {
+      "files": [
+        "src/frr_control/teleop_node.py",
+        "src/frr_control/frr_control/teleop_node.py",
+        "src/frr_navigation/frr_navigation/teleop_node.py"
+      ],
+      "publishes": {
+        "/cmd_vel": 3,
+        "/camera_tilt": 2
+      },
+      "subscribes": {}
+    },
+    "MotorDriverNode": {
+      "files": [
+        "src/frr_control/motor_controller_node_backup.py",
+        "src/frr_control/frr_control/motor_controller_node.py"
+      ],
+      "publishes": {
+        "/motor_status": 2
+      },
+      "subscribes": {
+        "/cmd_vel": 2,
+        "/camera_tilt": 2,
+        "/speed_correction": 2
+      }
+    },
+    "CleanTeleopNode": {
+      "files": [
+        "src/frr_control/frr_control/teleop_node_clean.py"
+      ],
+      "publishes": {
+        "/cmd_vel_teleop": 1,
+        "/cmd_vel": 1,
+        "/camera_tilt": 1
+      },
+      "subscribes": {
+        "/obstacle_detected": 1
+      }
+    },
+    "ESP32BridgeNode": {
+      "files": [
+        "src/frr_control/frr_control/esp32_bridge_node.py"
+      ],
+      "publishes": {
+        "/motor_status": 1,
+        "/esp32_telemetry": 1,
+        "/sensors/smoke": 1,
+        "/sensors/gas": 1,
+        "/sensors/flame": 1,
+        "/sensors/temperature": 1
+      },
+      "subscribes": {
+        "/cmd_vel": 1,
+        "/camera_tilt": 1,
+        "/water_pump": 1,
+        "/fire_scan": 1
+      }
+    },
+    "SimpleMotor": {
+      "files": [
+        "src/frr_control/frr_control/motor_simple.py"
+      ],
+      "publishes": {},
+      "subscribes": {
+        "/cmd_vel": 1
+      }
+    },
+    "VideoStreamerNode": {
+      "files": [
+        "src/frr_video/streamer_node.py",
+        "src/frr_video/frr_video/streamer_node.py"
+      ],
+      "publishes": {},
+      "subscribes": {
+        "/camera/image_raw": 2
+      }
+    },
+    "SimpleAutonomousNode": {
+      "files": [
+        "src/frr_navigation/frr_navigation/simple_autonomous_node.py"
+      ],
+      "publishes": {
+        "/cmd_vel": 1
+      },
+      "subscribes": {
+        "/scan": 1,
+        "/aruco/pose": 1,
+        "/esp32_telemetry": 1
+      }
+    },
+    "AutonomousNavigationNode": {
+      "files": [
+        "src/frr_navigation/frr_navigation/autonomous_nav_node.py"
+      ],
+      "publishes": {
+        "/cmd_vel": 1,
+        "/nav_status": 1
+      },
+      "subscribes": {
+        "/esp32/sensors": 1
+      }
+    },
+    "ArucoFollowerNode": {
+      "files": [
+        "src/frr_navigation/frr_navigation/aruco_follower_node.py"
+      ],
+      "publishes": {
+        "/cmd_vel": 1,
+        "/obstacle_detected": 1
+      },
+      "subscribes": {
+        "/aruco/pose": 1,
+        "/scan": 1
+      }
+    },
+    "ESP32TeleopNode": {
+      "files": [
+        "src/frr_navigation/frr_navigation/esp32_teleop_node.py"
+      ],
+      "publishes": {
+        "/cmd_vel": 1,
+        "/camera_tilt": 1,
+        "/fire_scan": 1,
+        "/water_pump": 1
+      },
+      "subscribes": {}
+    },
+    "AutonomousFirebotNode": {
+      "files": [
+        "src/frr_navigation/frr_navigation/autonomous_firebot_node.py"
+      ],
+      "publishes": {
+        "/cmd_vel": 1,
+        "/water_pump": 1,
+        "/autonomous_status": 1
+      },
+      "subscribes": {
+        "/esp32_telemetry": 1,
+        "/scan": 1,
+        "/autonomous_mode": 1
+      }
+    },
+    "CameraNode": {
+      "files": [
+        "src/frr_sensors/camera_node.py",
+        "src/frr_sensors/frr_sensors/camera_node.py"
+      ],
+      "publishes": {
+        "/camera/image_raw": 2,
+        "/aruco/pose": 2,
+        "/camera/image_raw/compressed": 1
+      },
+      "subscribes": {}
+    },
+    "SimpleCameraNode": {
+      "files": [
+        "src/frr_sensors/simple_camera_node.py",
+        "src/frr_sensors/frr_sensors/simple_camera_node.py"
+      ],
+      "publishes": {
+        "/camera/image_raw": 1,
+        "/aruco/pose": 1
+      },
+      "subscribes": {}
+    },
+    "LidarOdometryNode": {
+      "files": [
+        "src/frr_sensors/frr_sensors/lidar_odometry_node.py"
+      ],
+      "publishes": {
+        "/lidar_odom": 1
+      },
+      "subscribes": {
+        "/scan": 1,
+        "/imu/mpu6050": 1
+      }
+    },
+    "MPU6050NodeRobust": {
+      "files": [
+        "src/frr_sensors/frr_sensors/mpu6050_node.py",
+        "src/frr_sensors/frr_sensors/mpu6050_node_vibration_filtered.py",
+        "src/frr_sensors/frr_sensors/mpu6050_node_robust.py"
+      ],
+      "publishes": {
+        "/imu/mpu6050": 3,
+        "/imu/mpu6050_raw": 3
+      },
+      "subscribes": {}
+    },
+    "ObstacleAvoidanceNode": {
+      "files": [
+        "src/frr_sensors/frr_sensors/obstacle_avoidance_node.py"
+      ],
+      "publishes": {
+        "/cmd_vel": 1,
+        "/obstacle_detected": 1
+      },
+      "subscribes": {
+        "/cmd_vel_teleop": 1
+      }
+    },
+    "SensorFusionNode": {
+      "files": [
+        "src/frr_sensors/frr_sensors/sensor_fusion_node.py"
+      ],
+      "publishes": {
+        "/odom": 1
+      },
+      "subscribes": {
+        "/esp32_telemetry": 1,
+        "/imu/mpu6050": 1
+      }
+    },
+    "ESP32SensorNode": {
+      "files": [
+        "src/frr_sensors/frr_sensors/esp32_sensor_node.py"
+      ],
+      "publishes": {
+        "/fire_detected": 1,
+        "/hazard_level": 1
+      },
+      "subscribes": {
+        "/esp32_telemetry": 1
+      }
+    },
+    "LidarNode": {
+      "files": [
+        "src/frr_sensors/frr_sensors/lidar_node.py"
+      ],
+      "publishes": {
+        "/scan": 1,
+        "/lidar/raw": 1
+      },
+      "subscribes": {}
+    },
+    "OdometryNode": {
+      "files": [
+        "src/frr_sensors/frr_sensors/odometry_node.py"
+      ],
+      "publishes": {
+        "/odom": 1,
+        "/velocity_error": 1,
+        "/speed_correction": 1
+      },
+      "subscribes": {
+        "/imu/mpu6050": 1,
+        "/cmd_vel": 1
+      }
+    }
+  },
+  "topics": {
+    "/scan": {
+      "publishers": [
+        "LidarNode"
+      ],
+      "subscribers": [
+        "ObstacleDebugger",
+        "LidarOdometryNode",
+        "SimpleAutonomousNode",
+        "LidarViewer",
+        "AutonomousFirebotNode",
+        "ArucoFollowerNode"
+      ]
+    },
+    "/cmd_vel_teleop": {
+      "publishers": [
+        "CleanTeleopNode"
+      ],
+      "subscribers": [
+        "ObstacleDebugger",
+        "ObstacleAvoidanceNode"
+      ]
+    },
+    "/cmd_vel": {
+      "publishers": [
+        "CleanTeleopNode",
+        "SimpleAutonomousNode",
+        "ObstacleAvoidanceNode",
+        "AutonomousNavigationNode",
+        "TeleopNode",
+        "AutonomousFirebotNode",
+        "ESP32TeleopNode",
+        "ArucoFollowerNode"
+      ],
+      "subscribers": [
+        "ObstacleDebugger",
+        "MotorDriverNode",
+        "SimpleMotor",
+        "ESP32BridgeNode",
+        "OdometryNode"
+      ]
+    },
+    "/camera_tilt": {
+      "publishers": [
+        "ESP32TeleopNode",
+        "TeleopNode",
+        "CleanTeleopNode"
+      ],
+      "subscribers": [
+        "MotorDriverNode",
+        "ESP32BridgeNode"
+      ]
+    },
+    "/speed_correction": {
+      "publishers": [
+        "OdometryNode"
+      ],
+      "subscribers": [
+        "MotorDriverNode"
+      ]
+    },
+    "/obstacle_detected": {
+      "publishers": [
+        "ObstacleAvoidanceNode",
+        "ArucoFollowerNode"
+      ],
+      "subscribers": [
+        "CleanTeleopNode"
+      ]
+    },
+    "/esp32_telemetry": {
+      "publishers": [
+        "ESP32BridgeNode"
+      ],
+      "subscribers": [
+        "SimpleAutonomousNode",
+        "ESP32SensorNode",
+        "AutonomousFirebotNode",
+        "SensorFusionNode"
+      ]
+    },
+    "/water_pump": {
+      "publishers": [
+        "ESP32TeleopNode",
+        "AutonomousFirebotNode"
+      ],
+      "subscribers": [
+        "ESP32BridgeNode"
+      ]
+    },
+    "/fire_scan": {
+      "publishers": [
+        "ESP32TeleopNode"
+      ],
+      "subscribers": [
+        "ESP32BridgeNode"
+      ]
+    },
+    "/camera/image_raw": {
+      "publishers": [
+        "CameraNode",
+        "SimpleCameraNode"
+      ],
+      "subscribers": [
+        "VideoStreamerNode"
+      ]
+    },
+    "/aruco/pose": {
+      "publishers": [
+        "CameraNode",
+        "SimpleCameraNode"
+      ],
+      "subscribers": [
+        "SimpleAutonomousNode",
+        "ArucoFollowerNode"
+      ]
+    },
+    "/imu/mpu6050": {
+      "publishers": [
+        "MPU6050NodeRobust"
+      ],
+      "subscribers": [
+        "OdometryNode",
+        "LidarOdometryNode",
+        "SensorFusionNode"
+      ]
+    }
+  }
+}
