@@ -98,16 +98,13 @@ class ArucoFollowerNode(Node):
         """Check for obstacles in front"""
         if len(msg.ranges) == 0:
             return
-        
-        # Check front sector (assume 0° is front, check ±30°)
+
         num_readings = len(msg.ranges)
         
-        # Front center (±30 degrees)
+    
         front_indices = []
-        front_indices.extend(range(0, int(num_readings * 0.083)))  # 0-30°
-        front_indices.extend(range(int(num_readings * 0.917), num_readings))  # 330-360°
-        
-        # Get minimum distance in front sector
+        front_indices.extend(range(0, int(num_readings * 0.083)))  
+        front_indices.extend(range(int(num_readings * 0.917), num_readings))  
         front_distances = [msg.ranges[i] for i in front_indices if 0.0 < msg.ranges[i] < 12.0]
         
         if front_distances:
@@ -115,8 +112,7 @@ class ArucoFollowerNode(Node):
             
             previous_state = self.obstacle_detected
             self.obstacle_detected = min_distance < self.min_obstacle_distance
-            
-            # Log obstacle detection state changes
+        
             if self.obstacle_detected and not previous_state:
                 self.get_logger().warn('╔═══════════════════════════════════════════╗')
                 self.get_logger().warn('║   ⚠️  OBSTACLE DETECTED IN FRONT ⚠️       ║')

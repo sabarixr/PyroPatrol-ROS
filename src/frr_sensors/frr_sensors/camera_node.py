@@ -156,10 +156,8 @@ class CameraNode(Node):
     def detect_aruco_markers(self, frame):
         """Detect ArUco markers and estimate pose"""
         try:
-            # Convert to grayscale for ArUco detection
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
-            # Detect markers (compatible with different OpenCV versions)
+       
             if self.use_new_api:
                 corners, ids, rejected = self.aruco_detector.detectMarkers(gray)
             else:
