@@ -14,7 +14,6 @@ from geometry_msgs.msg import Twist, Pose
 from std_msgs.msg import String, Bool
 from sensor_msgs.msg import LaserScan
 import json
-import math
 
 class AutonomousFirebotNode(Node):
     def __init__(self):
@@ -53,6 +52,8 @@ class AutonomousFirebotNode(Node):
         self.min_front_distance = float('inf')
         self.min_left_distance = float('inf')
         self.min_right_distance = float('inf')
+    # ArUco pose (if available)
+    self.aruco_pose = None
         
         # Subscribers
         self.telemetry_sub = self.create_subscription(
@@ -135,6 +136,16 @@ class AutonomousFirebotNode(Node):
         else:
             self.obstacle_detected = False
             self.obstacle_direction = None
+
+    def aruco_callback(self, msg):
+        """Receive ArUco marker pose and store for navigation use."""
+        try:
+            # msg is geometry_msgs/Pose
+            self.aruco_pose = msg
+            # debug log for visibility
+            self.get_logger().debug(f'Received ArUco pose: x={msg.position.x:.2f}, y={msg.position.y:.2f}, z={msg.position.z:.2f}')
+        except Exception:
+            self.aruco_pose = None
 
     def mode_callback(self, msg):
         """Enable/disable autonomous mode"""
