@@ -9,6 +9,7 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import TransformStamped, Twist
+from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Imu
 from std_msgs.msg import String
 import json
@@ -44,8 +45,11 @@ class SensorFusionNode(Node):
             Imu, '/imu/mpu6050', self.imu_callback, 10
         )
         
-        # Publishers
-        self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
+    # Publishers
+    self.odom_pub = self.create_publisher(Odometry, '/odom', 10)
+    # Publish a lightweight fused pose for consumption by higher-level
+    # autonomy nodes (e.g. SimpleAutonomousNode)
+    self.fusion_pose_pub = self.create_publisher(PoseStamped, '/sensor_fusion/pose', 10)
         
         # TF broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
@@ -196,6 +200,17 @@ class SensorFusionNode(Node):
             t.transform.rotation.w = quat_w
         
         self.tf_broadcaster.sendTransform(t)
+
+        # Also publish a simple PoseStamped containing the fused pose.
+        try:
+            pose_msg = PoseStamped()
+            pose_msg.header.stamp = current_time.to_msg()
+            pose_msg.header.frame_id = 'odom'
+            pose_msg.pose = odom.pose.pose
+            self.fusion_pose_pub.publish(pose_msg)
+        except Exception:
+            # Keep fusion lightweight; failures here shouldn't crash the node
+            pass
 
 
 def main(args=None):

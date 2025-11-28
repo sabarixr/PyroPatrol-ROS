@@ -1,210 +1,13 @@
 {
   "nodes": {
-    "test_motors_root": {
-      "files": [
-        "test_motors_root.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "LidarMotorCheck": {
-      "files": [
-        "check_lidar_motor.py"
-      ],
-      "publishes": {},
-      "subscribes": {
-        "/lidar/raw": 1
-      }
-    },
-    "fix_camera_memory": {
-      "files": [
-        "fix_camera_memory.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_esp32": {
-      "files": [
-        "test_esp32.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "motor_test": {
-      "files": [
-        "motor_test.py"
-      ],
-      "publishes": {
-        "/cmd_vel": 1
-      },
-      "subscribes": {}
-    },
-    "test_visibility": {
-      "files": [
-        "test_visibility.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "diagnose_mpu6050": {
-      "files": [
-        "diagnose_mpu6050.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_clear_visibility": {
-      "files": [
-        "test_clear_visibility.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_color_format": {
-      "files": [
-        "test_color_format.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "servo_test": {
-      "files": [
-        "servo_test.py"
-      ],
-      "publishes": {
-        "/camera_tilt": 1
-      },
-      "subscribes": {}
-    },
-    "ObstacleDebugger": {
-      "files": [
-        "debug_obstacle_avoidance.py"
-      ],
-      "publishes": {},
-      "subscribes": {
-        "/scan": 1,
-        "/cmd_vel_teleop": 1,
-        "/cmd_vel": 1
-      }
-    },
-    "test_optimized_camera": {
-      "files": [
-        "test_optimized_camera.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "direct_camera_test": {
-      "files": [
-        "direct_camera_test.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "camera_settings_adjuster": {
-      "files": [
-        "camera_settings_adjuster.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "LidarAngleDiagnostic": {
-      "files": [
-        "diagnose_lidar_angles.py"
-      ],
-      "publishes": {},
-      "subscribes": {
-        "/scan": 1
-      }
-    },
-    "test_gpio_pwm": {
-      "files": [
-        "test_gpio_pwm.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "discover_esp32_protocol": {
-      "files": [
-        "discover_esp32_protocol.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_enb_directly": {
-      "files": [
-        "test_enb_directly.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "find_esp32_commands": {
-      "files": [
-        "find_esp32_commands.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_gpio": {
-      "files": [
-        "test_gpio.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_vibration_filtering": {
-      "files": [
-        "test_vibration_filtering.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "LidarViewer": {
-      "files": [
-        "check_lidar.py"
-      ],
-      "publishes": {},
-      "subscribes": {
-        "/scan": 1
-      }
-    },
-    "test_individual_motors": {
-      "files": [
-        "test_individual_motors.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "visualize_obstacle_zones": {
-      "files": [
-        "visualize_obstacle_zones.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_camera": {
-      "files": [
-        "test_camera.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
-    "test_gpio_pins": {
-      "files": [
-        "test_gpio_pins.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
     "TeleopNode": {
       "files": [
         "src/frr_control/teleop_node.py",
-        "src/frr_control/frr_control/teleop_node.py",
         "src/frr_navigation/frr_navigation/teleop_node.py"
       ],
       "publishes": {
-        "/cmd_vel": 3,
-        "/camera_tilt": 2
+        "/cmd_vel": 2,
+        "/camera_tilt": 1
       },
       "subscribes": {}
     },
@@ -219,20 +22,6 @@
       ],
       "publishes": {},
       "subscribes": {}
-    },
-    "MotorDriverNode": {
-      "files": [
-        "src/frr_control/motor_controller_node_backup.py",
-        "src/frr_control/frr_control/motor_controller_node.py"
-      ],
-      "publishes": {
-        "/motor_status": 2
-      },
-      "subscribes": {
-        "/cmd_vel": 2,
-        "/camera_tilt": 2,
-        "/speed_correction": 2
-      }
     },
     "CleanTeleopNode": {
       "files": [
@@ -272,22 +61,6 @@
         "/water_pump": 1,
         "/fire_scan": 1
       }
-    },
-    "SimpleMotor": {
-      "files": [
-        "src/frr_control/frr_control/motor_simple.py"
-      ],
-      "publishes": {},
-      "subscribes": {
-        "/cmd_vel": 1
-      }
-    },
-    "speed_controller_node": {
-      "files": [
-        "src/frr_control/frr_control/speed_controller_node.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
     },
     "__init__": {
       "files": [
@@ -413,13 +186,6 @@
         "/camera/image_raw": 2
       }
     },
-    "optimized_streamer_node": {
-      "files": [
-        "src/frr_video/frr_video/optimized_streamer_node.py"
-      ],
-      "publishes": {},
-      "subscribes": {}
-    },
     "teleop_node": {
       "files": [
         "src/frr_navigation/teleop_node.py"
@@ -440,18 +206,6 @@
         "/esp32_telemetry": 1
       }
     },
-    "AutonomousNavigationNode": {
-      "files": [
-        "src/frr_navigation/frr_navigation/autonomous_nav_node.py"
-      ],
-      "publishes": {
-        "/cmd_vel": 1,
-        "/nav_status": 1
-      },
-      "subscribes": {
-        "/esp32/sensors": 1
-      }
-    },
     "ArucoFollowerNode": {
       "files": [
         "src/frr_navigation/frr_navigation/aruco_follower_node.py"
@@ -464,18 +218,6 @@
         "/aruco/pose": 1,
         "/scan": 1
       }
-    },
-    "ESP32TeleopNode": {
-      "files": [
-        "src/frr_navigation/frr_navigation/esp32_teleop_node.py"
-      ],
-      "publishes": {
-        "/cmd_vel": 1,
-        "/camera_tilt": 1,
-        "/fire_scan": 1,
-        "/water_pump": 1
-      },
-      "subscribes": {}
     },
     "AutonomousFirebotNode": {
       "files": [
@@ -516,18 +258,7 @@
     },
     "SimpleCameraNode": {
       "files": [
-        "src/frr_sensors/simple_camera_node.py",
-        "src/frr_sensors/frr_sensors/simple_camera_node.py"
-      ],
-      "publishes": {
-        "/camera/image_raw": 1,
-        "/aruco/pose": 1
-      },
-      "subscribes": {}
-    },
-    "PlaceholderNode": {
-      "files": [
-        "src/frr_sensors/frr_sensors/imu_node.py"
+        "src/frr_sensors/simple_camera_node.py"
       ],
       "publishes": {},
       "subscribes": {}
@@ -547,20 +278,12 @@
     "MPU6050NodeRobust": {
       "files": [
         "src/frr_sensors/frr_sensors/mpu6050_node.py",
-        "src/frr_sensors/frr_sensors/mpu6050_node_vibration_filtered.py",
         "src/frr_sensors/frr_sensors/mpu6050_node_robust.py"
       ],
       "publishes": {
-        "/imu/mpu6050": 3,
-        "/imu/mpu6050_raw": 3
+        "/imu/mpu6050": 2,
+        "/imu/mpu6050_raw": 2
       },
-      "subscribes": {}
-    },
-    "RobotTFPublisher": {
-      "files": [
-        "src/frr_sensors/frr_sensors/robot_tf_publisher.py"
-      ],
-      "publishes": {},
       "subscribes": {}
     },
     "ObstacleAvoidanceNode": {
@@ -615,20 +338,6 @@
         "/lidar/raw": 1
       },
       "subscribes": {}
-    },
-    "OdometryNode": {
-      "files": [
-        "src/frr_sensors/frr_sensors/odometry_node.py"
-      ],
-      "publishes": {
-        "/odom": 1,
-        "/velocity_error": 1,
-        "/speed_correction": 1
-      },
-      "subscribes": {
-        "/imu/mpu6050": 1,
-        "/cmd_vel": 1
-      }
     },
     "x2.launch": {
       "files": [
@@ -744,58 +453,17 @@
     }
   },
   "topics": {
-    "/lidar/raw": {
-      "publishers": [
-        "LidarNode"
-      ],
-      "subscribers": [
-        "LidarMotorCheck"
-      ]
-    },
     "/cmd_vel": {
       "publishers": [
-        "ESP32TeleopNode",
-        "motor_test",
-        "AutonomousFirebotNode",
-        "CleanTeleopNode",
         "ArucoFollowerNode",
-        "AutonomousNavigationNode",
+        "AutonomousFirebotNode",
+        "SimpleAutonomousNode",
+        "TeleopNode",
         "ObstacleAvoidanceNode",
-        "TeleopNode",
-        "SimpleAutonomousNode"
+        "CleanTeleopNode"
       ],
       "subscribers": [
-        "SimpleMotor",
-        "ESP32BridgeNode",
-        "ObstacleDebugger",
-        "OdometryNode",
-        "MotorDriverNode"
-      ]
-    },
-    "/camera_tilt": {
-      "publishers": [
-        "ESP32TeleopNode",
-        "CleanTeleopNode",
-        "TeleopNode",
-        "servo_test"
-      ],
-      "subscribers": [
-        "ESP32BridgeNode",
-        "MotorDriverNode"
-      ]
-    },
-    "/scan": {
-      "publishers": [
-        "LidarNode"
-      ],
-      "subscribers": [
-        "LidarAngleDiagnostic",
-        "LidarViewer",
-        "AutonomousFirebotNode",
-        "ArucoFollowerNode",
-        "ObstacleDebugger",
-        "LidarOdometryNode",
-        "SimpleAutonomousNode"
+        "ESP32BridgeNode"
       ]
     },
     "/cmd_vel_teleop": {
@@ -803,23 +471,16 @@
         "CleanTeleopNode"
       ],
       "subscribers": [
-        "ObstacleDebugger",
         "ObstacleAvoidanceNode"
       ]
     },
-    "/motor_status": {
+    "/camera_tilt": {
       "publishers": [
-        "ESP32BridgeNode",
-        "MotorDriverNode"
-      ],
-      "subscribers": []
-    },
-    "/speed_correction": {
-      "publishers": [
-        "OdometryNode"
+        "CleanTeleopNode",
+        "TeleopNode"
       ],
       "subscribers": [
-        "MotorDriverNode"
+        "ESP32BridgeNode"
       ]
     },
     "/obstacle_detected": {
@@ -831,15 +492,21 @@
         "CleanTeleopNode"
       ]
     },
+    "/motor_status": {
+      "publishers": [
+        "ESP32BridgeNode"
+      ],
+      "subscribers": []
+    },
     "/esp32_telemetry": {
       "publishers": [
         "ESP32BridgeNode"
       ],
       "subscribers": [
+        "SimpleAutonomousNode",
         "SensorFusionNode",
         "ESP32SensorNode",
-        "AutonomousFirebotNode",
-        "SimpleAutonomousNode"
+        "AutonomousFirebotNode"
       ]
     },
     "/sensors/smoke": {
@@ -868,50 +535,44 @@
     },
     "/water_pump": {
       "publishers": [
-        "AutonomousFirebotNode",
-        "ESP32TeleopNode"
+        "AutonomousFirebotNode"
       ],
       "subscribers": [
         "ESP32BridgeNode"
       ]
     },
     "/fire_scan": {
-      "publishers": [
-        "ESP32TeleopNode"
-      ],
+      "publishers": [],
       "subscribers": [
         "ESP32BridgeNode"
       ]
     },
     "/camera/image_raw": {
       "publishers": [
-        "SimpleCameraNode",
         "CameraNode"
       ],
       "subscribers": [
         "VideoStreamerNode"
       ]
     },
+    "/scan": {
+      "publishers": [
+        "LidarNode"
+      ],
+      "subscribers": [
+        "SimpleAutonomousNode",
+        "ArucoFollowerNode",
+        "LidarOdometryNode",
+        "AutonomousFirebotNode"
+      ]
+    },
     "/aruco/pose": {
       "publishers": [
-        "SimpleCameraNode",
         "CameraNode"
       ],
       "subscribers": [
-        "ArucoFollowerNode",
-        "SimpleAutonomousNode"
-      ]
-    },
-    "/nav_status": {
-      "publishers": [
-        "AutonomousNavigationNode"
-      ],
-      "subscribers": []
-    },
-    "/esp32/sensors": {
-      "publishers": [],
-      "subscribers": [
-        "AutonomousNavigationNode"
+        "SimpleAutonomousNode",
+        "ArucoFollowerNode"
       ]
     },
     "/autonomous_status": {
@@ -949,7 +610,6 @@
         "MPU6050NodeRobust"
       ],
       "subscribers": [
-        "OdometryNode",
         "LidarOdometryNode",
         "SensorFusionNode"
       ]
@@ -968,7 +628,6 @@
     },
     "/odom": {
       "publishers": [
-        "OdometryNode",
         "SensorFusionNode"
       ],
       "subscribers": []
@@ -985,9 +644,9 @@
       ],
       "subscribers": []
     },
-    "/velocity_error": {
+    "/lidar/raw": {
       "publishers": [
-        "OdometryNode"
+        "LidarNode"
       ],
       "subscribers": []
     }

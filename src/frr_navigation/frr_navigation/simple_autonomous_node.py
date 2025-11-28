@@ -9,6 +9,7 @@ Simple Autonomous Navigation Node
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist, Pose
+from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import String
 import json
@@ -29,6 +30,10 @@ class SimpleAutonomousNode(Node):
             Pose, '/aruco/pose', self.aruco_callback, 10)
         self.telemetry_sub = self.create_subscription(
             String, '/esp32_telemetry', self.telemetry_callback, 10)
+        # Sensor fusion pose subscription (fused odometry/pose)
+        self.fusion_sub = self.create_subscription(
+            PoseStamped, '/sensor_fusion/pose', self.fusion_callback, 10
+        )
         
         # Parameters
         self.declare_parameter('obstacle_distance', 0.5)  # meters
@@ -43,6 +48,7 @@ class SimpleAutonomousNode(Node):
         self.last_scan = None
         self.aruco_detected = False
         self.aruco_pose = None
+    self.fusion_pose = None
         self.approaching_marker = False
         self.approach_start_time = None
         
@@ -97,6 +103,14 @@ class SimpleAutonomousNode(Node):
                 self.fire_detected = False
         except:
             pass
+
+    def fusion_callback(self, msg):
+        """Receive fused pose from sensor fusion node"""
+        self.fusion_pose = msg.pose
+        # Log intentionally at debug level to avoid spamming
+        self.get_logger().debug(
+            f'Received fused pose: x={msg.pose.position.x:.2f}, y={msg.pose.position.y:.2f}'
+        )
     
     def check_obstacles(self):
         """Check for obstacles in front using LIDAR"""
