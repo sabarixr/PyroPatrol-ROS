@@ -1,23 +1,20 @@
-# 🚒 Fire Fighter Rover ROS 2 System with SLAM
+# 🚒 Fire Fighter Rover ROS 2 System (No SLAM)
 
-> **NEW!** SLAM mapping and autonomous navigation now available! See [QUICK_START.md](QUICK_START.md) for the complete autonomous fire-fighting system with LIDAR SLAM.
+> **Note:** This system does **not** use SLAM or global mapping. LIDAR is used for local obstacle detection and reactive navigation only. See [ARCHITECTURE.md](ARCHITECTURE.md) for a full system diagram and data flow.
 
-> Version control initialized (git) – this README now reflects the structured repository layout and workflow.
-
-A complete ROS 2 system for a Raspberry Pi 4 based fire fighter rover with camera, IMU, motor control, and SLAM-based autonomous navigation capabilities.
+A complete ROS 2 system for a Raspberry Pi 4 based fire-fighting rover with camera, IMU, motor control, and robust local obstacle avoidance.
 
 ## 🎯 Quick Launch
 
-**For autonomous SLAM operation:**
+**Quick Start (all nodes):**
 ```bash
-./launch_slam.sh
+./start_rover.sh
 ```
-See [QUICK_START.md](QUICK_START.md), [SLAM_README.md](SLAM_README.md), and [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md) for complete documentation.
-
-**For manual teleoperation:**
+Or, to launch manually:
 ```bash
-ros2 launch frr_bringup rover_bringup.launch.py
+ros2 launch frr_bringup esp32_rover_bringup.launch.py
 ```
+See [ARCHITECTURE.md](ARCHITECTURE.md) and [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md) for full documentation.
 
 ---
 
@@ -25,11 +22,9 @@ ros2 launch frr_bringup rover_bringup.launch.py
 
 | Document | Description |
 |----------|-------------|
-| **[README.md](README.md)** | This file - original system overview and manual operation |
-| **[QUICK_START.md](QUICK_START.md)** | Quick reference for SLAM autonomous system |
-| **[SLAM_README.md](SLAM_README.md)** | Complete SLAM system documentation |
-| **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** | Pre-flight checklist before autonomous operation |
+| **[README.md](README.md)** | This file - system overview and usage |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | System architecture and data flow diagrams |
+| **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** | Pre-flight checklist before autonomous operation |
 | **[ESP32_FIRMWARE_TEMPLATE.ino](ESP32_FIRMWARE_TEMPLATE.ino)** | ESP32 Arduino firmware with MPU6050 support |
 
 ---
@@ -42,12 +37,12 @@ A complete ROS 2 system for a Raspberry Pi 4 based fire fighter rover with camer
 frr_ws/
 ├── src/
 │   ├── frr_bringup/          # Launch files aggregating system nodes
-│   ├── frr_control/          # Motor driver, teleop control logic
-│   ├── frr_navigation/       # (Planned / WIP) navigation and obstacle logic
-│   ├── frr_sensors/          # IMU, camera, lidar and sensor interfaces
+│   ├── frr_control/          # ESP32 bridge, motor control, teleop
+│   ├── frr_navigation/       # Autonomous firebot logic (obstacle avoidance, fire detection)
+│   ├── frr_sensors/          # IMU, camera, lidar, sensor fusion, static TFs
 │   ├── frr_video/            # Video streaming (Flask MJPEG)
 │   ├── ydlidar_ros2_driver/  # Vendor ROS2 driver for YDLidar
-│   └── YDLidar-SDK/          # Low-level SDK sources
+│   └── ydlidar_sdk/          # Low-level SDK sources
 ├── tools/                    # Utility scripts / diagnostics helpers
 ├── *.sh                      # Setup, launch, diagnostic shell scripts
 ├── test_*.py / test_*.sh     # Standalone test scripts for components
@@ -95,13 +90,16 @@ git push -u origin main
 
 ---
 
+
 ## 🧠 System Overview
 
 The rover integrates:
 - **Camera** → ArUco marker detection + MJPEG video streaming
-- **MMA8452 Accelerometer** → tilt/fall detection and velocity estimation
-- **L298N Motor Driver** → differential drive with PWM speed control
-- **Teleoperation** → keyboard control for manual driving
+- **MPU6050 IMU** → orientation and acceleration (sensor fusion)
+- **YDLidar X2** → 360° LIDAR for local obstacle detection
+- **L298N Motor Driver** → differential drive with PWM speed control (via ESP32)
+- **ESP32** → Motor control, encoders, fire sensors, IMU, and telemetry
+- **Teleoperation** → keyboard/manual control
 
 ## ⚙️ Hardware Connections
 
@@ -130,39 +128,31 @@ The rover integrates:
 - **CSI Camera** connected to Raspberry Pi camera port
 - Accessible via `cv2.VideoCapture(0)`
 
-## 📦 ROS 2 Packages
+## 🔄 ROS 2 Topics
+Key topics used in the system:
 
-### 1️⃣ `frr_sensors`
-- `imu_node` – Legacy IMU reader (publishes `/imu/data_raw`, `/rover/fall_detected`)
-- `frr_sensors/imu_node.py` variants – Robust / vibration filtered MPU6050 (`/imu/mpu6050`, `/imu/mpu6050_raw`)
-- `camera_node` / `simple_camera_node` – OpenCV camera + ArUco detection (`/camera/image_raw`, `/camera/image_raw/compressed`, `/aruco/pose`)
-- `lidar_node` – Lidar scan + raw values (`/scan`, `/lidar/raw`)
-- `lidar_odometry_node` – Combines scan + IMU to publish odometry (`/lidar_odom`)
-- `odometry_node` – Fuses IMU + commanded velocity to produce `/odom`, `/velocity_error`, `/speed_correction`
-- `obstacle_avoidance_node` – Subscribes to `/scan` & `/cmd_vel`, republishes corrected `/cmd_vel` and `/obstacle_detected`
-
-### 2️⃣ `frr_control`
-- `motor_controller_node` – Differential drive motor + servo tilt control (subs: `/cmd_vel`, `/camera_tilt`, optional `/speed_correction`; pubs: `/motor_status`)
-- `motor_simple.py` – Minimal subscriber to `/cmd_vel` for direct motor control
-- `teleop_node` / `teleop_node_clean` – Keyboard teleoperation (pubs: `/cmd_vel`, `/camera_tilt`; subs optional `/obstacle_detected`)
-- `speed_controller_node` – Applies corrections from odometry (`/speed_correction`)
-- `camera_servo_node` – Servo angle management (`/camera_tilt`)
-
-### 3️⃣ `frr_navigation`
-- Experimental `teleop_node` variant (future navigation hooks) – publishes `/cmd_vel`, `/camera_tilt`
-
-### 4️⃣ `frr_video`
-- `streamer_node` / `optimized_streamer_node` – MJPEG streaming server (subs: `/camera/image_raw` or `/camera/image_raw/compressed`)
-
-### 5️⃣ `ydlidar_ros2_driver`
-- Vendor lidar driver node (pubs: `/scan`, `/point_cloud`; client subscribes to `/scan` for info)
+| Topic | Type | Publishers | Subscribers | Purpose |
+|-------|------|------------|-------------|---------|
+| `/scan` | `sensor_msgs/LaserScan` | ydlidar_ros2_driver | autonomous_firebot_node | 2D lidar scan for obstacle avoidance |
+| `/imu/mpu6050` | `sensor_msgs/Imu` | mpu6050_node | sensor_fusion_node | IMU orientation & accel |
+| `/odom` | `nav_msgs/Odometry` | sensor_fusion_node | autonomous_firebot_node | Fused odometry (encoders + IMU) |
+| `/camera/image_raw` | `sensor_msgs/Image` | camera_node | streamer_node | Camera frames |
+| `/aruco/pose` | `geometry_msgs/PoseStamped` | camera_node | autonomous_firebot_node | ArUco marker pose |
+| `/esp32_telemetry` | `std_msgs/String` | esp32_bridge_node | autonomous_firebot_node | ESP32 sensor/encoder/fire data |
+| `/cmd_vel` | `geometry_msgs/Twist` | autonomous_firebot_node, teleop | esp32_bridge_node | Velocity commands to ESP32 |
+- `autonomous_firebot_node.py` – Main autonomous logic (obstacle avoidance, fire detection, pathfinding)
 
 ### 6️⃣ `frr_bringup`
-- Launch files orchestrating sensors, control, video, and optional avoidance/navigation stacks
+### 4️⃣ `frr_video`
+- `streamer_node.py` – MJPEG streaming server (subscribes to `/camera/image_raw`)
 
-## 🔄 ROS 2 Topics
+
+### 5️⃣ `ydlidar_ros2_driver`
+- Vendor lidar driver node (publishes `/scan`)
+
 Comprehensive topic matrix extracted from source code:
-
+### 6️⃣ `frr_bringup`
+- Launch files orchestrating all nodes for full system startup
 | Topic | Type | Publishers | Subscribers | Purpose |
 |-------|------|------------|-------------|---------|
 | `/cmd_vel` | `geometry_msgs/Twist` | teleop nodes, obstacle_avoidance_node (corrected) | motor_controller_node, obstacle_avoidance_node (input), motor_simple | Base velocity commands |
@@ -241,37 +231,34 @@ sudo reboot
 
 ## 🚀 Usage
 
+
 ### Launch All Nodes
 ```bash
 # Source the workspace
 source /home/alibaba/frr_ws/install/setup.bash
 
-# Launch all nodes (with video streaming)
-ros2 launch frr_bringup rover_bringup.launch.py
-
-# Launch without video streaming (lower CPU usage)
-ros2 launch frr_bringup rover_bringup.launch.py enable_video_stream:=false
+# Launch all nodes (recommended)
+ros2 launch frr_bringup esp32_rover_bringup.launch.py
 ```
+
 
 ### Manual Control
 ```bash
 # In a separate terminal
-ros2 launch frr_bringup teleop.launch.py
-
-# Or run directly
 ros2 run frr_control teleop_node
 ```
+
 
 ### Individual Node Testing
 ```bash
 # Test IMU
-ros2 run frr_sensors imu_node
+ros2 run frr_sensors mpu6050_node
 
 # Test camera
 ros2 run frr_sensors camera_node
 
-# Test motor driver
-ros2 run frr_control motor_driver_node
+# Test ESP32 bridge
+ros2 run frr_control esp32_bridge_node
 
 # Test video streamer
 ros2 run frr_video streamer_node
@@ -304,6 +291,7 @@ Once the system is running, access the video stream at:
 - **Web interface**: `http://<raspberry-pi-ip>:8080/`
 - **Direct MJPEG stream**: `http://<raspberry-pi-ip>:8080/stream.mjpg`
 
+
 ## 🔍 Monitoring
 
 ### View Topics
@@ -312,16 +300,13 @@ Once the system is running, access the video stream at:
 ros2 topic list
 
 # Monitor IMU data
-ros2 topic echo /imu/data_raw
-
-# Monitor fall detection
-ros2 topic echo /rover/fall_detected
+ros2 topic echo /imu/mpu6050
 
 # Monitor ArUco detection
 ros2 topic echo /aruco/pose
 
-# Monitor motor status
-ros2 topic echo /motor_status
+# Monitor ESP32 telemetry
+ros2 topic echo /esp32_telemetry
 ```
 
 ### Node Information
@@ -329,10 +314,9 @@ ros2 topic echo /motor_status
 # List running nodes
 ros2 node list
 
-# Get node info
-ros2 node info /imu_node
+ros2 node info /mpu6050_node
 ros2 node info /camera_node
-ros2 node info /motor_driver_node
+ros2 node info /esp32_bridge_node
 ```
 
 ## 📊 Performance Optimization
@@ -393,4 +377,4 @@ Apache License 2.0
 
 ## 👨‍💻 Author
 
-Fire Fighter Rover Development Team
+[sabarixr](https://github.com/sabarixr)

@@ -41,6 +41,14 @@ Thumbs.db
 # Logs and reports
 *.log
 
+# Mobile app secrets accidentally dropped in repo root
+google-services.json
+GoogleService-Info.plist
+
+# Mobile app Firebase configs kept local
+apps/rider_app/android/app/google-services.json
+apps/rider_app/ios/Runner/GoogleService-Info.plist
+
 # Temporary
 *.tmp
 *.bak

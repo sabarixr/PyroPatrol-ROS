@@ -8,6 +8,16 @@ from cv_bridge import CvBridge
 import cv2
 import numpy as np
 
+# ArUco Marker ID Mapping
+MARKER_IDS = {
+    0: {'name': 'HOME', 'description': 'Base station / charging point', 'action': 'return_to_base'},
+    1: {'name': 'FIRE', 'description': 'Fire location marker', 'action': 'move_to_fire'},
+    2: {'name': 'FORWARD', 'description': 'Move forward waypoint', 'action': 'move_forward'},
+    3: {'name': 'SAFE_ZONE', 'description': 'Emergency retreat point', 'action': 'retreat'},
+    4: {'name': 'PUMP', 'description': 'Water pump / refill station', 'action': 'activate_pump'},
+    5: {'name': 'STAGING', 'description': 'Staging area', 'action': 'wait_for_orders'},
+}
+
 class CameraNode(Node):
     def __init__(self):
         super().__init__('camera_node')
@@ -113,6 +123,9 @@ class CameraNode(Node):
         self.timer = self.create_timer(timer_period, self.capture_frame)
         
         self.get_logger().info(f'Camera node started - {self.frame_width}x{self.frame_height} @ {self.fps} FPS')
+        self.get_logger().info('ArUco Marker Mapping:')
+        for marker_id, info in MARKER_IDS.items():
+            self.get_logger().info(f'  ID {marker_id}: {info["name"]} - {info["description"]}')
 
     def capture_frame(self):
         """Capture and process camera frame"""
@@ -173,6 +186,7 @@ class CameraNode(Node):
                 
                 # Publish pose of the first detected marker
                 if len(tvecs) > 0:
+                    marker_id = int(ids[0][0])
                     pose_msg = Pose()
                     
                     # Translation (position)
@@ -192,7 +206,13 @@ class CameraNode(Node):
                     
                     self.aruco_pose_pub.publish(pose_msg)
                     
-                    self.get_logger().debug(f'ArUco marker {ids[0][0]} detected at distance {tvecs[0][0][2]:.3f}m')
+                    # Get marker info and log detection
+                    marker_info = MARKER_IDS.get(marker_id, {'name': 'UNKNOWN', 'description': 'Unknown marker'})
+                    distance = tvecs[0][0][2]
+                    self.get_logger().info(
+                        f'🎯 ArUco Marker Detected: ID={marker_id} ({marker_info["name"]}) | '
+                        f'Distance={distance:.3f}m | Action: {marker_info.get("action", "N/A")}'
+                    )
         
         except Exception as e:
             self.get_logger().warn(f'ArUco detection failed: {e}')

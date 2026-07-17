@@ -28,6 +28,8 @@ setup(
             'esp32_bridge_node = frr_control.esp32_bridge_node:main',
             'teleop_node = frr_control.teleop_node:main',
             'teleop_node_clean = frr_control.teleop_node_clean:main',
+            'mission_controller = frr_control.mission_controller:main',
+            'ws_bridge_node = frr_control.ws_bridge_node:main',
         ],
     },
 )

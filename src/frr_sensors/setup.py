@@ -32,9 +32,11 @@ setup(
             'camera_node = frr_sensors.camera_node:main',
             'simple_camera_node = frr_sensors.simple_camera_node:main',
             'esp32_sensor_node = frr_sensors.esp32_sensor_node:main',
+            'esp32_sensors_node = frr_sensors.esp32_sensors_node:main',
             'lidar_node = frr_sensors.lidar_node:main',
             'lidar_odometry_node = frr_sensors.lidar_odometry_node:main',
             'obstacle_avoidance_node = frr_sensors.obstacle_avoidance_node:main',
+            'ultrasonic_node = frr_sensors.ultrasonic_node:main',
         ],
     },
 )

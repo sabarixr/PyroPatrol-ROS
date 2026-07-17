@@ -15,31 +15,31 @@ def generate_launch_description():
     - ArUco follower (moves 2s when marker detected)
     - Video streaming
     """
-    
+
     # Declare arguments
     enable_video_arg = DeclareLaunchArgument(
         'enable_video_stream',
         default_value='true',
         description='Enable video streaming server'
     )
-    
+
     enable_aruco_arg = DeclareLaunchArgument(
         'enable_aruco_follower',
         default_value='false',
         description='Enable ArUco following behavior (disable for manual control)'
     )
-    
+
     enable_fire_arg = DeclareLaunchArgument(
         'enable_fire_seeking',
         default_value='true',
         description='Enable fire detection and seeking'
     )
-    
+
     return LaunchDescription([
         enable_video_arg,
         enable_aruco_arg,
         enable_fire_arg,
-        
+
         # ========== CAMERA (WITH FIXED INVERSION) ==========
         Node(
             package='frr_sensors',
@@ -55,7 +55,7 @@ def generate_launch_description():
                 'jpeg_quality': 80,
             }]
         ),
-        
+
         # ========== LIDAR (Obstacle Detection) ==========
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
@@ -66,7 +66,7 @@ def generate_launch_description():
                 ])
             ])
         ),
-        
+
         # ========== ESP32 BRIDGE (Motor Control + Fire Sensors) ==========
         Node(
             package='frr_control',
@@ -74,14 +74,14 @@ def generate_launch_description():
             name='esp32_bridge',
             output='screen',
             parameters=[{
-                'serial_port': '/dev/ttyACM0',
+                'serial_port': '/dev/ttyUSB0',
                 'baud_rate': 115200,
                 'wheel_base': 0.2,
                 'max_linear_speed': 100,
                 'max_angular_speed': 100,
             }]
         ),
-        
+
         # ========== TELEOP (Manual Control) ==========
         Node(
             package='frr_navigation',
@@ -90,7 +90,7 @@ def generate_launch_description():
             output='screen',
             prefix='xterm -e',  # Opens in new terminal window
         ),
-        
+
         # ========== FIRE SEEKING (Autonomous) ==========
         Node(
             package='frr_navigation',
@@ -108,7 +108,7 @@ def generate_launch_description():
                 LaunchConfiguration('enable_fire_seeking')
             )
         ),
-        
+
         # ========== ARUCO FOLLOWER ==========
         Node(
             package='frr_navigation',
@@ -124,7 +124,28 @@ def generate_launch_description():
                 LaunchConfiguration('enable_aruco_follower')
             )
         ),
-        
+
+        # ========== MISSION CONTROLLER (Coordinator for app + modes) ==========
+        Node(
+            package='frr_control',
+            executable='mission_controller',
+            name='mission_controller',
+            output='screen',
+            parameters=[{}]
+        ),
+
+        # ========== WEBSOCKET BRIDGE (Flutter App Communication) ==========
+        Node(
+            package='frr_control',
+            executable='ws_bridge_node',
+            name='ws_bridge',
+            output='screen',
+            parameters=[{
+                'ws_port': 8765,
+                'ws_host': '0.0.0.0',
+            }]
+        ),
+
         # ========== VIDEO STREAMER ==========
         Node(
             package='frr_video',

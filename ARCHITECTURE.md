@@ -1,4 +1,4 @@
-# Fire-Fighting Robot SLAM System Architecture
+# Fire-Fighting Robot System Architecture (No SLAM)
 
 ## Complete System Diagram
 
@@ -8,34 +8,27 @@
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
 ║  ┌────────────────────────────────────────────────────────────────────────┐  ║
-║  │                        SLAM & NAVIGATION STACK                         │  ║
+║  │                        SMART NAVIGATION & CONTROL STACK                  │  ║
 ║  ├────────────────────────────────────────────────────────────────────────┤  ║
 ║  │                                                                        │  ║
-║  │   ┌──────────────────┐         ┌─────────────────────┐               │  ║
-║  │   │  SLAM Toolbox    │────────>│    Occupancy Map    │               │  ║
-║  │   │   (Mapping/      │         │     /map topic      │               │  ║
-║  │   │  Localization)   │         └─────────────────────┘               │  ║
-║  │   └────────┬─────────┘                                                │  ║
-║  │            │                                                           │  ║
-║  │            │ map ──> odom transform                                   │  ║
-║  │            │                                                           │  ║
-║  │   ┌────────▼─────────┐                                                │  ║
-║  │   │ Sensor Fusion    │                                                │  ║
-║  │   │  - Encoders      │                                                │  ║
-║  │   │  - IMU (MPU6050) │                                                │  ║
-║  │   │  - LIDAR assist  │                                                │  ║
-║  │   └────────┬─────────┘                                                │  ║
-║  │            │                                                           │  ║
-║  │            │ /odom topic + odom ──> base_link TF                     │  ║
-║  │            │                                                           │  ║
+║  │   ┌─────────────────────────────┐                                     │  ║
+║  │   │ Sensor Fusion Node          │                                     │  ║
+║  │   │  - Encoders                 │                                     │  ║
+║  │   │  - IMU (MPU6050)            │                                     │  ║
+║  │   │  - LIDAR (Obstacle Avoid.)  │                                     │  ║
+║  │   └────────┬────────────────────┘                                     │  ║
+║  │            │                                                          │  ║
+║  │            │ /odom topic + odom ──> base_link TF                      │  ║
+║  │            │                                                          │  ║
 ║  │   ┌────────▼─────────┐                                                │  ║
 ║  │   │ Autonomous       │                                                │  ║
 ║  │   │ Firebot Node     │                                                │  ║
 ║  │   │                  │                                                │  ║
 ║  │   │ Priority 1:      │  Inputs:                                      │  ║
-║  │   │  Obstacle        │  • /scan (LIDAR)                              │  ║
-║  │   │  Avoidance       │  • /esp32_telemetry (fire sensors)            │  ║
-║  │   │                  │  • /aruco/pose (markers)                      │  ║
+║  │   │  Obstacle        │  • /scan (LIDAR, for avoidance & pathfinding)  │  ║
+║  │   │  Avoidance &     │  • /esp32_telemetry (fire sensors)            │  ║
+║  │   │  Smart Path      │  • /aruco/pose (markers)                      │  ║
+║  │   │  Finding         │                                                │  ║
 ║  │   │ Priority 2:      │                                                │  ║
 ║  │   │  Fire Detection  │  Output:                                      │  ║
 ║  │   │  & Extinguish    │  • /cmd_vel (velocity commands)               │  ║
@@ -43,11 +36,11 @@
 ║  │   │ Priority 3:      │                                                │  ║
 ║  │   │  Search Pattern  │                                                │  ║
 ║  │   └────────┬─────────┘                                                │  ║
-║  │            │                                                           │  ║
+║  │            │                                                          │  ║
 ║  └────────────┼───────────────────────────────────────────────────────────┘  ║
-║               │                                                               ║
-║               │ /cmd_vel (Twist messages)                                    ║
-║               │                                                               ║
+║               │                                                              ║
+║               │ /cmd_vel (Twist messages)                                   ║
+║               │                                                              ║
 ║  ┌────────────▼───────────────────────────────────────────────────────────┐  ║
 ║  │                          SENSOR NODES                                  │  ║
 ║  ├────────────────────────────────────────────────────────────────────────┤  ║
@@ -144,17 +137,13 @@
 └─────────────────────────────────┼───────────────────────────────────────┘
                                   │
 ┌─────────────────────────────────▼───────────────────────────────────────┐
-│                         MAPPING LAYER                                   │
+│                         MAPPING / SLAM                                   │
 │                                                                         │
-│  ┌────────────────────────────────────────────────────────────┐        │
-│  │                    SLAM Toolbox                            │        │
-│  │  • Consumes /scan (LIDAR) + /odom (fused)                  │        │
-│  │  • Builds occupancy grid map (/map)                        │        │
-│  │  • Publishes map ──> odom transform                        │        │
-│  │  • Loop closure for drift correction                       │        │
-│  └──────────────────────────────┬─────────────────────────────┘        │
-│                                 │                                       │
-└─────────────────────────────────┼───────────────────────────────────────┘
+│  • SLAM and global map building are NOT used in this project.          │
+│  • The YDLidar is used for local obstacle detection and reactive       │
+│    path adjustments only (no global occupancy map or loop-closure).
+│                                                                         │
+└─────────────────────────────────┴───────────────────────────────────────┘
                                   │
 ┌─────────────────────────────────▼───────────────────────────────────────┐
 │                      NAVIGATION LAYER                                   │
@@ -198,29 +187,27 @@
 ## TF Transform Tree
 
 ```
-map (SLAM Toolbox)
+odom (Sensor Fusion publishes odom→base_link)
  │
- └── odom (SLAM Toolbox publishes map→odom)
-      │
-      └── base_link (Sensor Fusion publishes odom→base_link)
-           │
-           ├── base_footprint (Static, -5cm Z)
-           │
-           ├── laser (Static, +5cm Z, center)
-           │    └── [YDLidar X2 measures from here]
-           │
-           ├── imu_link (Static, +3cm Z, center)
-           │    └── [MPU6050 orientation from here]
-           │
-           ├── camera_link (Static, +8cm X, +10cm Z)
-           │    └── [Camera captures from here]
-           │         └── [ArUco poses relative to this]
-           │
-           ├── left_wheel (Static, +10cm Y, -3.25cm Z)
-           │    └── [Left encoder counts rotations]
-           │
-           └── right_wheel (Static, -10cm Y, -3.25cm Z)
-                └── [Right encoder counts rotations]
+ └── base_link
+   │
+   ├── base_footprint (Static, -5cm Z)
+   │
+   ├── laser (Static, +5cm Z, center)
+   │    └── [YDLidar X2 measures from here]
+   │
+   ├── imu_link (Static, +3cm Z, center)
+   │    └── [MPU6050 orientation from here]
+   │
+   ├── camera_link (Static, +8cm X, +10cm Z)
+   │    └── [Camera captures from here]
+   │         └── [ArUco poses relative to this]
+   │
+   ├── left_wheel (Static, +10cm Y, -3.25cm Z)
+   │    └── [Left encoder counts rotations]
+   │
+   └── right_wheel (Static, -10cm Y, -3.25cm Z)
+     └── [Right encoder counts rotations]
 ```
 
 ## Communication Protocol
@@ -231,16 +218,16 @@ Published:
   /scan               - sensor_msgs/LaserScan     @ 10 Hz
   /imu/mpu6050        - sensor_msgs/Imu           @ 10 Hz
   /odom               - nav_msgs/Odometry         @ 10 Hz
-  /map                - nav_msgs/OccupancyGrid    @ 1 Hz
+  # /map                - nav_msgs/OccupancyGrid    @ 1 Hz (not used)
   /camera/image_raw   - sensor_msgs/Image         @ 30 Hz
   /aruco/pose         - geometry_msgs/PoseStamped (when detected)
   /esp32_telemetry    - std_msgs/String (JSON)    @ 10 Hz
   /cmd_vel            - geometry_msgs/Twist       (as needed)
 
 Subscribed:
-  /scan               - By SLAM Toolbox, Autonomous Firebot
+  /scan               - By Autonomous Firebot
   /imu/mpu6050        - By Sensor Fusion
-  /odom               - By SLAM Toolbox
+  # /odom               - (not used by SLAM)
   /cmd_vel            - By ESP32 Bridge
   /esp32_telemetry    - By Sensor Fusion, Autonomous Firebot
 ```
@@ -286,23 +273,17 @@ Telemetry (10 Hz):
 
 ```
 /home/alibaba/frr_ws/
-├── launch_slam.sh                          # Interactive launcher
 ├── QUICK_START.md                          # Quick reference
-├── SLAM_README.md                          # Detailed documentation
-├── SETUP_CHECKLIST.md                      # Pre-flight checklist
 ├── ARCHITECTURE.md                         # This file
+├── SETUP_CHECKLIST.md                      # Pre-flight checklist
 ├── ESP32_FIRMWARE_TEMPLATE.ino             # ESP32 Arduino code
 │
-├── maps/                                   # Saved SLAM maps
-│   ├── map1.posegraph
-│   ├── map1.yaml
-│   └── map1.data
+│   # (SLAM maps not used)
 │
 └── src/
     ├── frr_bringup/
     │   └── launch/
-    │       ├── slam_mapping.launch.py      # Mapping mode
-    │       └── slam_localization.launch.py # Localization mode
+    │       # slam_mapping.launch.py, slam_localization.launch.py (not used)
     │
     ├── frr_sensors/
     │   └── frr_sensors/
@@ -323,16 +304,15 @@ Telemetry (10 Hz):
 ---
 
 **System Philosophy:**
-- **Raspberry Pi = Brain**: High-level decision making, sensor fusion, SLAM
+- **Raspberry Pi = Brain**: High-level decision making, sensor fusion
 - **ESP32 = Muscle**: Real-time motor control, sensor reading, hardware PWM
 - **ROS 2 = Nervous System**: Inter-node communication, coordinate transforms
-- **SLAM = Memory**: Builds and maintains spatial awareness
 - **Sensors = Senses**: Perceive environment (vision, touch, smell, orientation)
 
 **Design Goals:**
 ✓ Modular architecture (easy to add/remove sensors)
 ✓ Real-time obstacle avoidance (safety first)
-✓ Accurate localization (sensor fusion + SLAM)
+✓ Accurate localization (sensor fusion)
 ✓ Fire detection and extinguishing (primary mission)
 ✓ Autonomous exploration (search unknown areas)
 ✓ Robust communication (ESP32 handles motor glitches)
