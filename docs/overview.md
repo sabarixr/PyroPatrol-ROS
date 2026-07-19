@@ -1,11 +1,11 @@
 # System Overview
 
-PyroPatrol Rover Control is built as a split robot system:
+PyroPatrol Rover Control is split into two main parts:
 
 - Raspberry Pi 4 runs ROS 2, perception, mission logic, video, and app connectivity.
 - ESP32-S3 handles low-level actuation and sensor telemetry.
 
-The rover is intended for local fire response tasks rather than map-building. The main sensing loop combines:
+The rover is meant for local fire response rather than map-building. The main sensing loop combines:
 
 - YDLidar for local obstacle detection
 - camera input for video and ArUco detection
@@ -14,7 +14,7 @@ The rover is intended for local fire response tasks rather than map-building. Th
 
 ## Runtime Goal
 
-The runtime stack tries to answer three questions continuously:
+At runtime, the stack is always trying to answer three questions:
 
 1. Is it safe to move?
 2. Where is the fire relative to the rover?
@@ -50,4 +50,4 @@ The main system launch file is:
 
 `src/frr_bringup/launch/esp32_rover_bringup.launch.py`
 
-That launch file brings up the bridge, telemetry parser, fire perception node, mission controller, camera, streaming node, and optional lidar.
+That launch file starts the ESP32 bridge, telemetry parser, fire perception node, mission controller, camera, streaming node, and optional lidar.

@@ -2,24 +2,24 @@
 
 ## Problem Framing
 
-The rover does not just need to know whether a sensor is active. It needs to compare three sectors together and decide:
+The rover does not just need to know whether a sensor is active. It needs to compare three sectors and decide:
 
 - `left`
 - `front`
 - `right`
 - `none`
 
-It also benefits from a secondary estimate of how strong or urgent the fire signal is.
+It also helps to estimate how strong or urgent that fire signal is.
 
 ## Why The Final Approach Was Chosen
 
-Earlier approaches worked, but the chosen MSCNN matched the task better because fire direction is comparative by nature.
+Earlier approaches worked, but the chosen MSCNN matched the task better because fire direction is fundamentally a comparative problem.
 
-The model needs to reason across sectors, not just within a single sector independently.
+The model needs to reason across sectors, not just treat each sector on its own.
 
 ## Chosen Model
 
-Multi-Sector CNN with cross-sector attention and dual heads:
+The chosen model is a Multi-Sector CNN with cross-sector attention and dual heads:
 
 - shared 1D CNN encoder per sector
 - cross-sector attention across `LEFT`, `FRONT`, `RIGHT`
@@ -42,7 +42,7 @@ flowchart TD
     D --> E[MSCNN]
     E --> F[direction]
     E --> G[severity]
-    F --> H[/mission/fire_perception]
+    F --> H[mission fire perception topic]
     G --> H
 ```
 
@@ -62,7 +62,7 @@ Severity metrics for the dual-head MSCNN:
 - MSE: `0.1656`
 - MAE: `0.2266`
 
-## Why MSCNN Beat The Others
+## Why MSCNN Performed Better
 
 - It sees all three sectors together.
 - It keeps short temporal behavior instead of only summary statistics.

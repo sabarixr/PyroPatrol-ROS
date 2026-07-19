@@ -41,7 +41,7 @@ That is why the final inference path was moved into:
 
 - `src/frr_sensors/models/`
 
-This keeps deployment cleaner and makes the ROS package self-contained for inference.
+This keeps deployment simpler and makes the ROS package self-contained for inference.
 
 ## Operator Path
 

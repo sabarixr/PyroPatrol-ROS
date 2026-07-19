@@ -2,7 +2,7 @@
 
 ## `frr_bringup`
 
-Responsible for launching the integrated rover stack.
+This package launches the integrated rover stack.
 
 Main launch file:
 
@@ -57,7 +57,7 @@ Key launch arguments:
 
 ## `frr_navigation`
 
-Contains motion and autonomous behavior nodes used by the rover stack.
+This package contains motion and autonomous behavior nodes used by the rover stack.
 
 Examples include:
 

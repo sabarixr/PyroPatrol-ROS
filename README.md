@@ -1,8 +1,8 @@
 # PyroPatrol Rover Control
 
-PyroPatrol Rover Control is a ROS 2 based fire-response rover stack for a Raspberry Pi 4 and ESP32-S3 robot. It combines local navigation, live video, a Flutter control app, and an MSCNN-based fire-perception model that predicts fire direction and severity from a full three-sector scan.
+PyroPatrol Rover Control is a ROS 2 project for a fire-response rover built around a Raspberry Pi 4 and an ESP32-S3. It brings together local navigation, live video, a Flutter operator app, and an MSCNN-based fire perception model that estimates fire direction and severity from a three-sector scan.
 
-This project is designed around local sensing and reactive behavior. It does not use SLAM or global mapping.
+The system is built around local sensing and reactive behavior. It does not use SLAM or global mapping.
 
 ## GitHub Description
 
@@ -45,7 +45,7 @@ PyroPatrol-ROS/
 └── README.md
 ```
 
-## Main Runtime Pieces
+## Main Parts
 
 - `frr_bringup`: integrated launch files
 - `frr_control`: mission controller, ESP32 bridge, WebSocket bridge
