@@ -20,7 +20,7 @@ setup(
     maintainer='alibaba',
     maintainer_email='alibaba@todo.todo',
     description='TODO: Package description',
-    license='TODO: License declaration',
+    license='Apache License 2.0',
     extras_require={
         'test': [
             'pytest',
