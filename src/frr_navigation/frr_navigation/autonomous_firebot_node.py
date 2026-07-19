@@ -74,7 +74,7 @@ class AutonomousFirebotNode(Node):
         self.control_timer = self.create_timer(0.1, self.control_loop)
         
         self.get_logger().info('🧠 Autonomous Firebot Brain started!')
-        self.get_logger().info('📡 Waiting for LIDAR and sensor data...')
+        self.get_logger().info('Waiting for LIDAR and sensor data...')
 
     def telemetry_callback(self, msg):
         """Receive sensor data from ESP32"""
@@ -137,7 +137,7 @@ class AutonomousFirebotNode(Node):
         """Enable/disable autonomous mode"""
         self.autonomous_enabled = msg.data
         if self.autonomous_enabled:
-            self.get_logger().info('🤖 Autonomous mode ENABLED')
+            self.get_logger().info('Autonomous mode ENABLED')
         else:
             self.get_logger().info('🛑 Autonomous mode DISABLED')
             self.stop_robot()
@@ -166,7 +166,7 @@ class AutonomousFirebotNode(Node):
         
         # Priority 2: FIRE DETECTED - Navigate towards it!
         elif self.fire_detected:
-            status = f"🔥 FIRE DETECTED! MQ2:{self.sensor_data.get('mq2',0)} MQ5:{self.sensor_data.get('mq5',0)}"
+            status = f"FIRE DETECTED! MQ2:{self.sensor_data.get('mq2',0)} MQ5:{self.sensor_data.get('mq5',0)}"
             
             # Move towards fire (forward)
             twist.linear.x = self.max_speed * 0.5  # Slower approach
@@ -178,7 +178,7 @@ class AutonomousFirebotNode(Node):
                 pump_msg = Bool()
                 pump_msg.data = True
                 self.pump_pub.publish(pump_msg)
-                status += " - 💦 SPRAYING WATER!"
+                status += " - SPRAYING WATER!"
         
         # Priority 3: SEARCH PATTERN - Look for fire
         else:

@@ -88,11 +88,11 @@ class ArucoFollowerNode(Node):
         
         # Start moving if not already moving and no obstacle
         if not self.moving and not self.obstacle_detected:
-            self.get_logger().info('🚀 Starting forward movement...')
+            self.get_logger().info('Starting forward movement...')
             self.moving = True
             self.move_start_time = self.get_clock().now()
         elif self.obstacle_detected:
-            self.get_logger().warn('⚠️  Obstacle detected! Cannot move forward.')
+            self.get_logger().warn('[!] Obstacle detected! Cannot move forward.')
 
     def scan_callback(self, msg):
         """Check for obstacles in front"""
@@ -119,7 +119,7 @@ class ArucoFollowerNode(Node):
             # Log obstacle detection state changes
             if self.obstacle_detected and not previous_state:
                 self.get_logger().warn('╔═══════════════════════════════════════════╗')
-                self.get_logger().warn('║   ⚠️  OBSTACLE DETECTED IN FRONT ⚠️       ║')
+                self.get_logger().warn('║   [!] OBSTACLE DETECTED IN FRONT [!]      ║')
                 self.get_logger().warn('╚═══════════════════════════════════════════╝')
                 self.get_logger().warn(f'   Minimum distance: {min_distance:.2f} m')
                 self.get_logger().warn('')

@@ -47,7 +47,7 @@ class UltrasonicNode(Node):
                 GPIO.output(self.trigger_pin, False)
                 time.sleep(0.1)  # Let sensor settle
                 self.gpio_initialized = True
-                self.get_logger().info(f'✓ Ultrasonic sensor initialized: TRIG={self.trigger_pin}, ECHO={self.echo_pin}')
+                self.get_logger().info(f'[OK] Ultrasonic sensor initialized: TRIG={self.trigger_pin}, ECHO={self.echo_pin}')
             except Exception as e:
                 self.get_logger().error(f'Failed to initialize GPIO: {e}')
         else:

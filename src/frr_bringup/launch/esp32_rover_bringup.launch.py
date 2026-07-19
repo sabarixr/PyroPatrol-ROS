@@ -40,6 +40,12 @@ def generate_launch_description():
         description='Enable YDLidar X2'
     )
 
+    enable_fire_perception_arg = DeclareLaunchArgument(
+        'enable_fire_perception',
+        default_value='true',
+        description='Enable MSCNN-based fire direction perception'
+    )
+
     lidar_port_arg = DeclareLaunchArgument(
         'lidar_port',
         default_value='/dev/ttyUSB0',
@@ -55,6 +61,7 @@ def generate_launch_description():
         serial_port_arg,
         ws_port_arg,
         enable_lidar_arg,
+        enable_fire_perception_arg,
         lidar_port_arg,
 
         # ESP32-S3 Bridge Node (handles motor control + command forwarding)
@@ -82,6 +89,17 @@ def generate_launch_description():
             parameters=[{
                 'use_sim_time': False,
             }]
+        ),
+
+        Node(
+            package='frr_sensors',
+            executable='fire_perception_node',
+            name='fire_perception_node',
+            output='screen',
+            parameters=[{
+                'use_sim_time': False,
+            }],
+            condition=IfCondition(LaunchConfiguration('enable_fire_perception'))
         ),
 
         # Ultrasonic Sensor Node (HC-SR04 on Raspberry Pi GPIO - backup when LIDAR unavailable)

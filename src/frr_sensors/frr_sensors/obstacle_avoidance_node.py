@@ -69,7 +69,7 @@ class ObstacleAvoidanceNode(Node):
         self.get_logger().info(f'Subscribed to LiDAR scan topic: {self.scan_topic}')
         self.get_logger().info(f'Rover dimensions: {self.rover_length:.2f}m x {self.rover_width:.2f}m')
         self.get_logger().info(f'Safety margin: {self.safety_margin:.2f}m, Stop distance: {self.stop_distance:.2f}m')
-        self.get_logger().info('⚠️  LiDAR auto-detection enabled - will switch to passthrough if no LiDAR detected')
+        self.get_logger().info('[!] LiDAR auto-detection enabled - will switch to passthrough if no LiDAR detected')
 
     def check_lidar_mode(self):
         """Check if LiDAR is present and switch modes accordingly"""
@@ -78,7 +78,7 @@ class ObstacleAvoidanceNode(Node):
         if self.last_scan_time is None:
             # Never received a scan yet
             if not self.lidar_detected:
-                self.get_logger().warn('⚠️  No LiDAR detected - running in PASSTHROUGH mode (no obstacle avoidance)', throttle_duration_sec=5.0)
+                self.get_logger().warn('[!] No LiDAR detected - running in PASSTHROUGH mode (no obstacle avoidance)', throttle_duration_sec=5.0)
             return
         
         # Check if we've received recent scans
@@ -87,11 +87,11 @@ class ObstacleAvoidanceNode(Node):
         if time_since_scan > self.lidar_timeout:
             if self.lidar_detected:
                 self.lidar_detected = False
-                self.get_logger().warn(f'⚠️  LiDAR data lost (no scan for {time_since_scan:.1f}s) - switching to PASSTHROUGH mode')
+                self.get_logger().warn(f'[!] LiDAR data lost (no scan for {time_since_scan:.1f}s) - switching to PASSTHROUGH mode')
         else:
             if not self.lidar_detected:
                 self.lidar_detected = True
-                self.get_logger().info('✓ LiDAR detected - obstacle avoidance ACTIVE')
+                self.get_logger().info('[OK] LiDAR detected - obstacle avoidance ACTIVE')
 
     def cmd_vel_callback(self, msg):
         """Receive commanded velocity from teleop/navigation."""

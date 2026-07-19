@@ -209,7 +209,7 @@ class AutonomousNavigationNode(Node):
         twist = Twist()
         self.cmd_vel_pub.publish(twist)
         
-        self.get_logger().info('🔥 ARRIVED AT FIRE/GAS SOURCE!')
+        self.get_logger().info('ARRIVED AT FIRE/GAS SOURCE!')
         self.get_logger().info(f'   Temperature: {self.temperature:.1f}°C')
         self.get_logger().info(f'   MQ5: {self.mq5_value:.1f} PPM')
         self.get_logger().info(f'   MQ6: {self.mq6_value:.1f} PPM')

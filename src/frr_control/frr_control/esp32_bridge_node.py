@@ -98,7 +98,7 @@ class ESP32BridgeNode(Node):
                 time.sleep(2)  # Wait for ESP32 to initialize
                 self.serial_connected = True
                 self.serial_port = port  # Update to actual connected port
-                self.get_logger().info(f'✓ Connected to ESP32 on {port}')
+                self.get_logger().info(f'[OK] Connected to ESP32 on {port}')
                 return
 
             except Exception as e:
@@ -129,7 +129,7 @@ class ESP32BridgeNode(Node):
             return
 
         if not self.handshake_sent:
-            self.get_logger().info('📡 Sending READY handshake to ESP32...')
+            self.get_logger().info('Sending READY handshake to ESP32...')
             if self.send_command('READY'):
                 self.handshake_sent = True
                 self.get_logger().info('✅ READY handshake sent to ESP32')
@@ -139,7 +139,7 @@ class ESP32BridgeNode(Node):
                 if self.send_command('STATUS'):
                     self.get_logger().info('✅ STATUS command sent - ESP32 should respond with system state')
                 else:
-                    self.get_logger().warn('⚠ Failed to send STATUS command')
+                    self.get_logger().warn('[!] Failed to send STATUS command')
 
     def request_status(self):
         """Periodically request status from ESP32"""
@@ -154,7 +154,7 @@ class ESP32BridgeNode(Node):
                 else:
                     self.get_logger().warn('Failed to send STATUS request')
             else:
-                self.get_logger().warn('⚠ Failed to send READY, will retry...')
+                self.get_logger().warn('[!] Failed to send READY, will retry...')
 
 
     def esp32_command_callback(self, msg):

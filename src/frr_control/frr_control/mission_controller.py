@@ -44,12 +44,12 @@ class MissionController(Node):
         self.last_aruco_pose = None
         self.last_scan = None
         self.obstacles = {'front': float('inf'), 'left': float('inf'), 'right': float('inf')}
-        
+
         # Ultrasonic sensor (backup when LIDAR unavailable)
         self.ultrasonic_distance = float('inf')
         self.lidar_available = False
         self.last_lidar_time = 0
-        
+
         # ESP32 fire sensor telemetry
         self.esp32_data = {
             'mq2': 0,
@@ -76,6 +76,7 @@ class MissionController(Node):
         self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
         self.create_subscription(String, '/mission/command', self.command_callback, 10)
         self.create_subscription(String, '/esp32_telemetry', self.esp32_callback, 10)
+        self.create_subscription(String, '/mission/fire_perception', self.fire_perception_callback, 10)
         self.create_subscription(Range, '/ultrasonic/front', self.ultrasonic_callback, 10)
 
         # Services
@@ -92,7 +93,7 @@ class MissionController(Node):
         self.max_angular = 1.0
         self.kp_linear = 0.8
         self.kp_angular = 1.5
-        
+
         # ArUco marker task tracking
         self.detected_marker_id = None
         self.aruco_task_executed = False
@@ -103,7 +104,7 @@ class MissionController(Node):
             4: 'ACTIVATE_PUMP',
             5: 'STOP'
         }
-        
+
         # Autonomous fire mode state
         self.waiting_for_scan = False
         self.scan_request_time = 0
@@ -133,56 +134,68 @@ class MissionController(Node):
         try:
             data = json.loads(msg.data)
             msg_type = data.get('type')
-            
+
             if msg_type == 'scan_sample':
                 # Continuous sensor readings during scan
                 self.esp32_data['mq2'] = data.get('mq2', 0)
                 self.esp32_data['mq5'] = data.get('mq5', 0)
                 self.esp32_data['temp'] = data.get('temp', 25.0)
                 self.esp32_data['scan_angle'] = data.get('angle', 90)
-                
+
             elif msg_type == 'scan_result':
                 # Result from endpoint sampling
                 self.esp32_data['scan_result'] = data
                 self.get_logger().info(f"Scan result: angle={data.get('angle')}, score={data.get('score'):.3f}, dominant={data.get('dominant')}")
-                
+
             elif msg_type == 'scan_complete':
-                # Direction decision from SCAN command
-                direction = data.get('direction', 'none')
-                self.esp32_data['scan_direction'] = direction
-                self.waiting_for_scan = False
-                
-                # IMPORTANT: Direction inversion warning
-                now = time.time()
-                if now - self.last_direction_inversion_warned > 30:
-                    self.get_logger().info("⚠️  REMINDER: ESP32 scan directions are INVERTED! ESP32 'left' = Robot RIGHT, ESP32 'right' = Robot LEFT")
-                    self.last_direction_inversion_warned = now
-                
-                self.get_logger().info(f"Scan complete: ESP32 direction={direction} (INVERTED for robot), reason={data.get('reason')}")
-                
-                # If in autonomous fire mode, act on scan result
-                if self.state == 'AUTONOMOUS_FIRE' and direction != 'none':
-                    # INVERT the direction: ESP32 left = robot right, ESP32 right = robot left
-                    robot_direction = self.invert_direction(direction)
-                    self.get_logger().info(f"🔥 ESP32 says '{direction}' → Turning robot {robot_direction}")
-                    self.execute_turn(robot_direction)
-                    
+                # Handled by AI Perception Node now
+                pass
+
             elif msg_type == 'alert':
                 # Flame detected by ESP32
                 self.fire_detected = True
                 self.last_flame_detection = time.time()
                 self.get_logger().warn(f"FIRE ALERT from ESP32: {data.get('msg')}")
-                
+
                 # If in autonomous fire mode, stop and let ESP32 handle pump
                 if self.state == 'AUTONOMOUS_FIRE':
                     self.stop_robot()
                     self.publish_status('Fire detected - ESP32 activating pump')
-                    
+
             elif msg_type == 'pump':
                 self.esp32_data['pump_active'] = (data.get('status') == 'on')
-                
+
         except Exception as e:
             self.get_logger().warn(f'Failed to parse ESP32 telemetry: {e}')
+
+    def fire_perception_callback(self, msg: String):
+        """Receive fused AI prediction (Direction & Severity) from fire perception node."""
+        try:
+            data = json.loads(msg.data)
+            direction = data.get('direction', 'none')
+            severity = data.get('severity', 0.0)
+
+            self.waiting_for_scan = False
+            self.get_logger().info(f"AI Perception: {direction.upper()} (Severity: {severity:.2f})")
+
+            if self.state == 'AUTONOMOUS_FIRE':
+                if direction != 'none':
+                    self.get_logger().info(f"AI says '{direction}' → Turning robot {direction}")
+                    self.execute_turn(direction)
+
+                    # Fire Severity Pump Control
+                    if direction == 'front' and severity > 0.6:
+                        self.get_logger().info(f"Fire is FRONT and Severity is high ({severity:.2f}) -> ACTIVATING PUMP!")
+                        self.send_esp32_command('PUMP_ON')
+
+                        # Auto-stop pump after 5 seconds to re-evaluate
+                        import threading
+                        threading.Timer(5.0, lambda: self.send_esp32_command('PUMP_OFF')).start()
+                else:
+                    self.execute_turn('none')
+
+        except Exception as e:
+            self.get_logger().warn(f'Failed to parse AI fire perception: {e}')
 
     def aruco_callback(self, msg: Pose):
         """Receive pose of detected ArUco marker (camera frame)."""
@@ -192,11 +205,11 @@ class MissionController(Node):
             # Check if marker has an ID attached (assuming it's in orientation.w or custom field)
             # For now, we'll simulate marker ID detection
             # In real implementation, you'd get this from aruco_detector node
-            
+
             # Execute ArUco marker task if close enough
             if hasattr(msg.position, 'z') and msg.position.z is not None:
                 distance = msg.position.z
-                
+
                 # If very close to marker (< 0.4m), execute its task
                 if distance < 0.4 and not self.aruco_task_executed:
                     # Simulate marker ID (in real system, this comes from aruco detector)
@@ -204,21 +217,21 @@ class MissionController(Node):
                     import random
                     if self.detected_marker_id is None:
                         self.detected_marker_id = random.randint(1, 5)
-                    
+
                     self.execute_aruco_task(self.detected_marker_id)
                     self.aruco_task_executed = True
-                    
+
                     # After task, wait for user takeover
                     self.set_state('WAIT_USER_TAKEOVER')
                     self.publish_status(f'ArUco marker {self.detected_marker_id} task complete - awaiting takeover')
-                    
+
                 elif distance < 0.6:
                     # Getting close - follow the marker
                     self.follow_aruco(msg)
                 else:
                     # Far away - follow the marker
                     self.follow_aruco(msg)
-                    
+
                     # Reset task execution flag when far from marker
                     if distance > 1.0:
                         self.aruco_task_executed = False
@@ -228,7 +241,7 @@ class MissionController(Node):
         self.last_scan = msg
         self.lidar_available = True
         self.last_lidar_time = time.time()
-        
+
         # simple sector checks (front: -15..15 deg, left: 60..120, right: -120..-60)
         ranges = msg.ranges
         angle_min = msg.angle_min
@@ -253,7 +266,7 @@ class MissionController(Node):
             front = left = right = float('inf')
 
         self.obstacles = {'front': float(front), 'left': float(left), 'right': float(right)}
-    
+
     def ultrasonic_callback(self, msg: Range):
         """Receive ultrasonic sensor data (backup when LIDAR unavailable)"""
         if msg.range < msg.max_range and msg.range > msg.min_range:
@@ -348,7 +361,7 @@ class MissionController(Node):
         msg.data = cmd
         self.esp32_cmd_pub.publish(msg)
         self.get_logger().info(f'Sent to ESP32: {cmd}')
-    
+
     def invert_direction(self, esp_direction: str):
         """Invert ESP32 scan direction to robot's actual direction.
         ESP32's left sensor = Robot's right side.
@@ -360,18 +373,18 @@ class MissionController(Node):
             return 'left'   # ESP32 right = robot left
         else:
             return esp_direction  # center or none
-    
+
     def execute_turn(self, robot_direction: str):
-        """Execute turn based on inverted scan result - send command to ESP32."""
+        """Execute turn based on AI direction - send command to ESP32."""
         if robot_direction == 'left':
             self.send_esp32_command('DRIVE -100 100')  # Turn robot left at FULL speed (don't scale turns)
-            self.get_logger().info('🔄 Commanding ESP32 to turn robot LEFT toward fire')
+            self.get_logger().info('Commanding ESP32 to turn robot LEFT toward fire')
             # Resume forward movement after turn
             import threading
             threading.Timer(1.5, lambda: self.resume_forward_after_turn()).start()
         elif robot_direction == 'right':
             self.send_esp32_command('DRIVE 100 -100')  # Turn robot right at FULL speed (don't scale turns)
-            self.get_logger().info('🔄 Commanding ESP32 to turn robot RIGHT toward fire')
+            self.get_logger().info('Commanding ESP32 to turn robot RIGHT toward fire')
             # Resume forward movement after turn
             import threading
             threading.Timer(1.5, lambda: self.resume_forward_after_turn()).start()
@@ -379,20 +392,20 @@ class MissionController(Node):
             forward_speed = int(-40 * self.autonomous_speed_multiplier)
             self.get_logger().info('➡️  No significant fire direction, continuing forward')
             self.send_esp32_command(f'DRIVE {forward_speed} {forward_speed}')  # Continue forward with speed control
-    
+
     def resume_forward_after_turn(self):
         """Resume forward movement after completing a turn."""
         if self.state == 'AUTONOMOUS_FIRE':
             forward_speed = int(-40 * self.autonomous_speed_multiplier)
-            self.get_logger().info('✓ Turn complete, resuming forward movement')
+            self.get_logger().info('[OK] Turn complete, resuming forward movement')
             self.send_esp32_command(f'DRIVE {forward_speed} {forward_speed}')  # Forward with speed control
-    
+
     def execute_aruco_task(self, marker_id: int):
         """Execute predefined task for ArUco marker ID."""
         task = self.aruco_marker_tasks.get(marker_id, 'UNKNOWN')
-        
+
         self.get_logger().info(f'📍 Executing ArUco Marker {marker_id} task: {task}')
-        
+
         if task == 'TURN_LEFT':
             self.send_esp32_command('DRIVE -80 80')  # Turn left
             self.publish_status(f'Marker {marker_id}: Turning Left')
@@ -416,28 +429,28 @@ class MissionController(Node):
             self.publish_status(f'Marker {marker_id}: Stopping Robot')
         else:
             self.get_logger().warn(f'Unknown marker ID: {marker_id}')
-    
+
     def detect_tjunction(self):
         """Detect if robot is at a T-junction using LIDAR."""
         front = self.obstacles.get('front', float('inf'))
         left = self.obstacles.get('left', float('inf'))
         right = self.obstacles.get('right', float('inf'))
-        
+
         # T-junction: front blocked, but left or right open
         if front < 0.5 and (left > 1.0 or right > 1.0):
             return True
         return False
-    
+
     def autonomous_fire_update(self):
         """Autonomous fire mode behavior loop."""
         if self.state != 'AUTONOMOUS_FIRE':
             return
-        
+
         now = time.time()
-        
+
         # Check if LIDAR is available (received data in last 2 seconds)
         lidar_active = (now - self.last_lidar_time) < 2.0
-        
+
         # Choose obstacle detection source
         if lidar_active:
             front = self.obstacles.get('front', float('inf'))
@@ -450,18 +463,18 @@ class MissionController(Node):
             left = float('inf')  # Ultrasonic can't detect sides
             right = float('inf')
             sensor_type = 'ULTRASONIC'
-            
+
             # Log once when switching to ultrasonic
             if not hasattr(self, '_ultrasonic_mode_logged'):
-                self.get_logger().warn('⚠️  LIDAR unavailable - using ULTRASONIC sensor for front obstacle detection')
+                self.get_logger().warn('[!] LIDAR unavailable - using ULTRASONIC sensor for front obstacle detection')
                 self._ultrasonic_mode_logged = True
-        
+
         # If currently reversing to reach desired scan distance (50cm)
         if self.reversing_before_scan:
             # Check if we've reached the target distance or timeout
             if front >= 0.45 and front <= 0.55:
                 # Good distance - stop and scan
-                self.get_logger().info(f'✓ Reached scan distance ({front:.2f}m), requesting SCAN')
+                self.get_logger().info(f'[OK] Reached scan distance ({front:.2f}m), requesting SCAN')
                 self.send_esp32_command('STOP')
                 self.send_esp32_command('SCAN')
                 self.reversing_before_scan = False
@@ -482,7 +495,7 @@ class MissionController(Node):
                 reverse_speed = int(40 * self.autonomous_speed_multiplier)
                 self.send_esp32_command(f'DRIVE {reverse_speed} {reverse_speed}')
                 return
-        
+
         # If waiting for scan result, don't move
         if self.waiting_for_scan:
             if now - self.scan_request_time > 10.0:
@@ -491,11 +504,11 @@ class MissionController(Node):
                 self.get_logger().warn('Scan timeout, resuming forward movement')
             else:
                 return
-        
+
         # LIDAR MODE: Check for T-junction every 2 seconds
         if lidar_active and now - self.last_tjunction_check > 2.0:
             self.last_tjunction_check = now
-            
+
             if self.detect_tjunction():
                 # Check distance and reverse if too close
                 if front < 0.4:
@@ -511,10 +524,10 @@ class MissionController(Node):
                     self.waiting_for_scan = True
                     self.scan_request_time = now
                 return
-        
+
         # Check for front obstacle that requires scanning
         obstacle_detected = front < 0.5  # 50cm threshold
-        
+
         if obstacle_detected:
             # Check if we're too close (< 40cm) - reverse first
             if front < 0.4:
@@ -532,7 +545,7 @@ class MissionController(Node):
                 self.waiting_for_scan = True
                 self.scan_request_time = now
                 return
-        
+
         # Move forward if path is clear
         # Apply speed multiplier to forward movement
         if front > 0.6:
@@ -617,18 +630,18 @@ class MissionController(Node):
             'IDLE': 'IDLE',
             'USER_TAKEOVER': 'USER_TAKEOVER'
         }
-        
+
         mapped_mode = mode_mapping.get(mode, mode)
         allowed = ['IDLE', 'SLAM_MAPPING', 'FOLLOW_ARUCO', 'USER_TAKEOVER', 'AUTONOMOUS_FIRE', 'AUTONOMOUS_NAV']
-        
+
         if mapped_mode not in allowed:
             self.get_logger().warn(f'Attempt to set unknown mode: {mode} (mapped to {mapped_mode})')
             return
-        
+
         # Enable/disable ESP32 scanning based on mode
         if mapped_mode == 'AUTONOMOUS_FIRE':
             self.send_esp32_command('SCAN_FIRE')
-            self.get_logger().info('🔥 Fire Seeking Mode: SCAN_FIRE enabled')
+            self.get_logger().info('Fire Seeking Mode: SCAN_FIRE enabled')
         elif mapped_mode == 'FOLLOW_ARUCO':
             self.send_esp32_command('DISABLE')
             self.aruco_task_executed = False
@@ -637,7 +650,7 @@ class MissionController(Node):
         elif mapped_mode in ['IDLE', 'USER_TAKEOVER']:
             self.send_esp32_command('DISABLE')
             self.get_logger().info('🎮 Manual Mode: Scanning disabled')
-            
+
         self.set_state(mapped_mode)
         self.publish_status(f'Mode set to {mapped_mode} (from {mode})')
 
@@ -678,7 +691,7 @@ class MissionController(Node):
                 obstacles_safe[key] = None
             else:
                 obstacles_safe[key] = value
-        
+
         data = {
             'state': self.state,
             'aruco_distance': self.last_aruco_pose.position.z if self.last_aruco_pose is not None else None,

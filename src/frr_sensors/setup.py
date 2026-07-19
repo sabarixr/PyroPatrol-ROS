@@ -1,3 +1,6 @@
+from glob import glob
+import os
+
 from setuptools import find_packages, setup
 
 package_name = 'frr_sensors'
@@ -10,6 +13,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'models'), glob('models/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -37,6 +41,7 @@ setup(
             'lidar_odometry_node = frr_sensors.lidar_odometry_node:main',
             'obstacle_avoidance_node = frr_sensors.obstacle_avoidance_node:main',
             'ultrasonic_node = frr_sensors.ultrasonic_node:main',
+            'fire_perception_node = frr_sensors.fire_perception_node:main',
         ],
     },
 )

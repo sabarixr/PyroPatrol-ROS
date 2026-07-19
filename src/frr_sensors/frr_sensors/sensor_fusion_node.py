@@ -55,7 +55,7 @@ class SensorFusionNode(Node):
         self.imu_angular_velocity_z = 0.0
         
         self.get_logger().info('🗺️  SLAM Sensor Fusion Node started!')
-        self.get_logger().info('📡 Fusing: LIDAR + MPU6050 + Wheel Encoders')
+        self.get_logger().info('Fusing: LIDAR + MPU6050 + Wheel Encoders')
 
     def telemetry_callback(self, msg):
         """Receive encoder data from ESP32 and compute odometry"""

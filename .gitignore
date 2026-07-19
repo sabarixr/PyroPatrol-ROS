@@ -52,7 +52,18 @@ apps/rider_app/ios/Runner/GoogleService-Info.plist
 # Temporary
 *.tmp
 *.bak
-*~
+*/venv
+
+# AI workspace bloat / generated outputs
+AI/venv/
+AI/.venv/
+AI/notebooks/__pycache__/
+AI/notebooks/*.pt
+AI/notebooks/*.pkl
+AI/notebooks/*.npy
+AI/data/*.npy
+AI/data/*.csv
+AI/models/
 
 # Backup specific file variants
 check_lidar.py.backup
