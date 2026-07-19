@@ -7,7 +7,7 @@
 
 ## Sensors
 
-- YDLidar X2 for local obstacle sensing
+- YDLidar X2 for local obstacle sensing and area identification (L-junction, T-junction, Dead-end, or avoid obstacles)
 - MPU6050 IMU
 - MQ2 smoke sensor
 - MQ5 gas sensor
@@ -18,7 +18,7 @@
 
 ## Actuation
 
-- L298N motor driver for left and right DC motors
+- L298N (preferably, I advise using a less noisy one) motor driver for left and right DC motors
 - water pump controlled through relay output
 - scan or camera servos depending on build
 
