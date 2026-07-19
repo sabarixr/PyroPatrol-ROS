@@ -4,9 +4,6 @@ PyroPatrol Rover Control is a ROS 2 project for a fire-response rover built arou
 
 The system is built around local sensing and reactive behavior. It does not use SLAM or global mapping.
 
-## GitHub Description
-
-`ROS 2 + ESP32-S3 fire-response rover with local navigation, live video, Flutter control app, and MSCNN-based fire direction perception.`
 
 ## Quick Start
 
