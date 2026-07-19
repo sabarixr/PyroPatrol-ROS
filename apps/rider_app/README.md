@@ -1,4 +1,4 @@
-# rider_app
+# PyroPatrol Rover Control
 
 A new Flutter project.
 

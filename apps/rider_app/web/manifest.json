@@ -1,6 +1,6 @@
 {
-    "name": "rider_app",
-    "short_name": "rider_app",
+    "name": "PyroPatrol Rover Control",
+    "short_name": "PyroPatrol",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

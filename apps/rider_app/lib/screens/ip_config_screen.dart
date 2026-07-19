@@ -70,7 +70,7 @@ class _IPConfigScreenState extends State<IPConfigScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Rover App',
+                      'PyroPatrol Rover Control',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,

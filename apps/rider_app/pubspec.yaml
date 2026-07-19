@@ -1,4 +1,4 @@
-name: rider_app
+name: pyropatrol_rover_control
 description: "Flutter control app for the rover."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
